@@ -1,0 +1,435 @@
+/* ==========================================================================
+   LearnHub — Page de connexion immersive (verre dépoli / glassmorphism)
+   Fichier : public/css/learnhub-login.css
+   Chargé uniquement par resources/views/auth/login.blade.php.
+   Toutes les classes sont préfixées « lh-login- » : aucun impact sur
+   l'inscription ni sur les autres pages.
+   Image attendue : public/images/auth/campus-login.jpg
+
+   Principes de mise en page :
+   - la page fait exactement la hauteur du viewport (100dvh, repli 100vh) ;
+   - la carte est centrée par flexbox (aucun positionnement manuel) ;
+   - aucun scroll de page : les espacements et hauteurs se compactent
+     automatiquement selon la hauteur disponible (clamp + dvh).
+
+   Réglages rapides (variables ci-dessous) :
+   - --lh-login-glass          : opacité du verre (photo très claire → augmenter)
+   - --lh-login-glass-blur     : intensité du flou
+   - --lh-login-focus-point    : cadrage de la photo
+   ========================================================================== */
+
+/* Le corps ne défile jamais (la propriété se propage au viewport) */
+.lh-login-body {
+    margin: 0;
+    overflow: hidden;
+    overscroll-behavior: none;
+}
+
+.lh-login-page {
+    /* Marque */
+    --lh-login-brand:        #7c3aed;
+    --lh-login-brand-dark:   #6d28d9;
+    --lh-login-accent:       #c4b5fd;   /* lavande : liens, focus, icônes actives */
+    --lh-login-accent-soft:  #ddd6fe;
+
+    /* Texte sur verre sombre */
+    --lh-login-text:         #ffffff;
+    --lh-login-text-soft:    rgba(255, 255, 255, .80);
+    --lh-login-text-faint:   rgba(255, 255, 255, .66);
+    --lh-login-icon:         rgba(255, 255, 255, .66);
+
+    /* Verre : teinte indigo bleutée, semi-transparente */
+    --lh-login-glass:           rgba(24, 20, 72, .56);
+    --lh-login-glass-fallback:  rgba(20, 14, 58, .86);   /* si backdrop-filter absent */
+    --lh-login-glass-sheen:     rgba(255, 255, 255, .13);
+    --lh-login-glass-edge:      rgba(255, 255, 255, .26);
+    --lh-login-glass-blur:      22px;
+
+    /* Champs */
+    --lh-login-field-bg:        rgba(12, 8, 44, .34);
+    --lh-login-field-bg-focus:  rgba(12, 8, 44, .48);
+    --lh-login-field-line:      rgba(255, 255, 255, .30);
+    --lh-login-field-line-hover:rgba(255, 255, 255, .52);
+
+    /* États */
+    --lh-login-line:         rgba(255, 255, 255, .18);
+    --lh-login-danger:       #ff9b90;
+    --lh-login-danger-text:  #ffd9d4;
+    --lh-login-danger-bg:    rgba(180, 35, 24, .34);
+    --lh-login-danger-line:  rgba(255, 155, 144, .50);
+    --lh-login-ok-text:      #d1fadf;
+    --lh-login-ok-bg:        rgba(6, 118, 71, .36);
+    --lh-login-ok-line:      rgba(110, 231, 170, .50);
+
+    --lh-login-radius-card:  22px;
+    --lh-login-radius-field: 12px;
+    --lh-login-ring:         0 0 0 4px rgba(196, 181, 253, .34);
+
+    /* Cadrage de la photo : ajustez selon votre image (x y) */
+    --lh-login-focus-point:  55% 40%;
+
+    /* Espacements fluides : valeurs maximales atteintes sur grands viewports,
+       compactage progressif quand la hauteur diminue. (repli en vh) */
+    --lh-login-page-pad-y:   clamp(8px, 2vh, 32px);
+    --lh-login-page-pad-x:   clamp(10px, 3.5vw, 16px);
+    --lh-login-card-pad-x:   2.5rem;
+    --lh-login-card-pad-y:   clamp(14px, 4.6vh, 40px);
+    --lh-login-gap-sm:       clamp(8px, 2.1vh, 18px);   /* entre champs */
+    --lh-login-gap-md:       clamp(8px, 2.2vh, 20px);
+    --lh-login-gap-lg:       clamp(8px, 2.8vh, 24px);
+    --lh-login-head-gap:     clamp(10px, 3.3vh, 28px);
+    --lh-login-input-h:      clamp(42px, 7vh, 50px);
+    --lh-login-btn-h:        clamp(44px, 7.3vh, 52px);
+    --lh-login-alert-pad:    clamp(8px, 1.6vh, 12px);
+
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    align-items: center;          /* centrage vertical */
+    justify-content: center;      /* centrage horizontal */
+    width: 100%;
+    height: 100vh;                /* repli */
+    height: 100dvh;               /* viewport dynamique (barres mobiles) */
+    padding: var(--lh-login-page-pad-y) var(--lh-login-page-pad-x);
+    overflow: hidden;
+    color: var(--lh-login-text);
+    font-family: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+    font-size: 1rem;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -webkit-text-size-adjust: 100%;
+}
+@supports (height: 100dvh) {
+    .lh-login-page {
+        --lh-login-page-pad-y:   clamp(8px, 2dvh, 32px);
+        --lh-login-card-pad-y:   clamp(14px, 4.6dvh, 40px);
+        --lh-login-gap-sm:       clamp(8px, 2.1dvh, 18px);
+        --lh-login-gap-md:       clamp(8px, 2.2dvh, 20px);
+        --lh-login-gap-lg:       clamp(8px, 2.8dvh, 24px);
+        --lh-login-head-gap:     clamp(10px, 3.3dvh, 28px);
+        --lh-login-input-h:      clamp(42px, 7dvh, 50px);
+        --lh-login-btn-h:        clamp(44px, 7.3dvh, 52px);
+        --lh-login-alert-pad:    clamp(8px, 1.6dvh, 12px);
+    }
+}
+.lh-login-page,
+.lh-login-page *,
+.lh-login-page *::before,
+.lh-login-page *::after { box-sizing: border-box; }
+.lh-login-page h1,
+.lh-login-page p { margin: 0; }
+.lh-login-page button,
+.lh-login-page input { font: inherit; }
+.lh-login-page [hidden] { display: none !important; }
+
+.lh-login-sr-only {
+    position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
+    overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}
+.lh-login-icon {
+    flex: none; width: 20px; height: 20px;
+    fill: none; stroke: currentColor; stroke-width: 1.75;
+    stroke-linecap: round; stroke-linejoin: round;
+}
+
+/* ---------- Arrière-plan : photo + voile indigo léger + secours ---------- */
+.lh-login-bg {
+    position: fixed; inset: 0; z-index: -1;
+    background:
+        linear-gradient(180deg, rgba(34, 14, 88, .42) 0%, rgba(34, 14, 88, .30) 45%, rgba(14, 6, 40, .66) 100%),
+        url("../images/auth/campus-login.jpg") var(--lh-login-focus-point) / cover no-repeat,
+        linear-gradient(135deg, #2e1a73 0%, #140a35 100%);
+}
+
+/* ---------- Phrase d'ambiance (grands écrans uniquement) ---------- */
+.lh-login-quote {
+    display: none;
+    position: fixed; left: 2.5rem; bottom: 2.25rem;
+    max-width: 20rem; margin: 0;
+    color: #fff; font-size: 1.5rem; font-weight: 600; line-height: 1.25; letter-spacing: -.01em;
+    text-shadow: 0 1px 14px rgba(10, 5, 30, .55);
+}
+@media (min-width: 1200px) and (min-height: 700px) { .lh-login-quote { display: block; } }
+
+/* ---------- Carte : verre dépoli ---------- */
+.lh-login-card {
+    position: relative;
+    flex: 0 1 auto;
+    width: 100%; max-width: 420px;
+    min-height: 0;
+    max-height: 100%;             /* ne dépasse jamais la zone visible */
+    padding: var(--lh-login-card-pad-y) var(--lh-login-card-pad-x);
+    color: var(--lh-login-text);
+    overflow-wrap: break-word;
+    /* Filet de sécurité : défilement INTERNE à la carte, uniquement si le contenu
+       ne peut vraiment plus tenir (écran extrêmement bas). Jamais de scroll de page. */
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, .35) transparent;
+    /* Secours (navigateur sans backdrop-filter) : verre plus opaque, texte toujours lisible */
+    background-color: var(--lh-login-glass-fallback);
+    background-image: linear-gradient(155deg, var(--lh-login-glass-sheen) 0%, rgba(255, 255, 255, 0) 42%);
+    border: 1px solid var(--lh-login-glass-edge);
+    border-radius: var(--lh-login-radius-card);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, .30),     /* reflet de l'arête haute */
+        inset 0 0 0 1px rgba(255, 255, 255, .04),
+        0 2px 6px rgba(8, 4, 28, .20),
+        0 32px 72px -24px rgba(8, 4, 28, .70);
+    animation: lh-login-in .28s ease-out both;
+}
+@supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+    .lh-login-card {
+        background-color: var(--lh-login-glass);
+        -webkit-backdrop-filter: blur(var(--lh-login-glass-blur)) saturate(150%);
+                backdrop-filter: blur(var(--lh-login-glass-blur)) saturate(150%);
+    }
+}
+@keyframes lh-login-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+.lh-login-head { margin-bottom: var(--lh-login-head-gap); text-align: center; }
+.lh-login-logo {
+    display: inline-flex; align-items: center; gap: .625rem; margin-bottom: var(--lh-login-gap-lg);
+    color: var(--lh-login-text); text-decoration: none;
+}
+.lh-login-logo:focus-visible { outline: 2px solid var(--lh-login-accent); outline-offset: 4px; border-radius: 8px; }
+.lh-login-logo__mark {
+    display: grid; place-items: center; width: 38px; height: 38px;
+    color: #fff; background: var(--lh-login-brand); border-radius: 11px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .28), 0 6px 14px -6px rgba(76, 29, 149, .9);
+}
+.lh-login-logo__name { font-size: 1.375rem; font-weight: 700; letter-spacing: -.01em; }
+.lh-login-title { font-size: 1.625rem; font-weight: 700; line-height: 1.2; letter-spacing: -.02em; }
+.lh-login-sub { margin-top: .375rem; color: var(--lh-login-text-soft); font-size: .9375rem; }
+
+/* ---------- Alertes ---------- */
+.lh-login-alert {
+    display: flex; gap: .625rem; margin-bottom: var(--lh-login-gap-md);
+    padding: var(--lh-login-alert-pad) .875rem;
+    border: 1px solid; border-radius: var(--lh-login-radius-field);
+    font-size: .875rem; line-height: 1.45;
+}
+.lh-login-alert > div { min-width: 0; }
+.lh-login-alert .lh-login-icon { width: 18px; height: 18px; margin-top: 1px; }
+.lh-login-alert--error   { color: var(--lh-login-danger-text); background: var(--lh-login-danger-bg); border-color: var(--lh-login-danger-line); }
+.lh-login-alert--error .lh-login-icon { color: var(--lh-login-danger); }
+.lh-login-alert--success { color: var(--lh-login-ok-text); background: var(--lh-login-ok-bg); border-color: var(--lh-login-ok-line); }
+.lh-login-alert--success .lh-login-icon { color: #6ee7a8; }
+.lh-login-alert__title { font-weight: 600; }
+
+/* ---------- Champs ---------- */
+.lh-login-field { margin-bottom: var(--lh-login-gap-sm); }
+.lh-login-field--check { margin-bottom: var(--lh-login-gap-lg); }
+.lh-login-label-row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: .125rem .75rem; margin-bottom: .4rem; }
+.lh-login-label { display: block; color: rgba(255, 255, 255, .94); font-size: .875rem; font-weight: 600; }
+.lh-login-label-row .lh-login-label { margin-bottom: 0; }
+.lh-login-field > .lh-login-label { margin-bottom: .4rem; }
+.lh-login-link { color: var(--lh-login-accent); font-size: .8125rem; font-weight: 600; text-decoration: none; }
+.lh-login-link:hover { color: #fff; text-decoration: underline; }
+.lh-login-link:focus-visible { outline: 2px solid var(--lh-login-accent); outline-offset: 3px; border-radius: 4px; }
+
+.lh-login-control { position: relative; }
+.lh-login-control__icon {
+    position: absolute; left: 14px; top: 50%; margin-top: -10px;
+    color: var(--lh-login-icon); pointer-events: none; transition: color .15s;
+}
+.lh-login-control:focus-within .lh-login-control__icon { color: var(--lh-login-accent); }
+
+.lh-login-input {
+    display: block; width: 100%; height: var(--lh-login-input-h); padding: 0 14px 0 44px;
+    color: var(--lh-login-text); caret-color: #fff; font-size: 1rem;
+    color-scheme: dark;
+    background: var(--lh-login-field-bg);
+    border: 1px solid var(--lh-login-field-line); border-radius: var(--lh-login-radius-field);
+    outline: none; -webkit-appearance: none; appearance: none;
+    transition: border-color .15s, box-shadow .15s, background-color .15s;
+}
+.lh-login-input--pwd { padding-right: 48px; }
+.lh-login-input::placeholder { color: var(--lh-login-text-faint); opacity: 1; }
+.lh-login-input:hover { border-color: var(--lh-login-field-line-hover); }
+.lh-login-input:focus { background: var(--lh-login-field-bg-focus); border-color: var(--lh-login-accent); box-shadow: var(--lh-login-ring); }
+.lh-login-input.is-invalid { border-color: var(--lh-login-danger); }
+.lh-login-input.is-invalid:focus { box-shadow: 0 0 0 4px rgba(255, 155, 144, .28); }
+
+/* Remplissage automatique du navigateur : reste sombre et lisible */
+.lh-login-input:-webkit-autofill,
+.lh-login-input:-webkit-autofill:hover,
+.lh-login-input:-webkit-autofill:active {
+    -webkit-text-fill-color: #fff;
+    caret-color: #fff;
+    -webkit-box-shadow: 0 0 0 1000px #251c63 inset;
+            box-shadow: 0 0 0 1000px #251c63 inset;
+    border-color: var(--lh-login-field-line);
+    transition: background-color 600000s 0s, color 600000s 0s;
+}
+.lh-login-input:-webkit-autofill:focus {
+    -webkit-text-fill-color: #fff;
+    -webkit-box-shadow: 0 0 0 1000px #2d2373 inset, 0 0 0 4px rgba(196, 181, 253, .34);
+            box-shadow: 0 0 0 1000px #2d2373 inset, 0 0 0 4px rgba(196, 181, 253, .34);
+    border-color: var(--lh-login-accent);
+}
+
+.lh-login-toggle {
+    position: absolute; right: 5px; top: 50%; width: 40px; height: 40px; margin-top: -20px;
+    display: grid; place-items: center; padding: 0;
+    color: var(--lh-login-text-soft); background: transparent; border: 0; border-radius: 8px; cursor: pointer;
+    transition: color .15s, background-color .15s;
+}
+.lh-login-toggle:hover { color: #fff; background: rgba(255, 255, 255, .12); }
+.lh-login-toggle:focus-visible { outline: 2px solid var(--lh-login-accent); outline-offset: -2px; }
+.lh-login-toggle .lh-login-icon--off,
+.lh-login-toggle[aria-pressed="true"] .lh-login-icon--on { display: none; }
+.lh-login-toggle[aria-pressed="true"] .lh-login-icon--off { display: block; }
+
+.lh-login-error {
+    display: flex; align-items: flex-start; gap: .375rem;
+    margin-top: .4rem; color: var(--lh-login-danger-text); font-size: .8125rem;
+}
+.lh-login-error .lh-login-icon { width: 16px; height: 16px; margin-top: 2px; color: var(--lh-login-danger); }
+.lh-login-error span { min-width: 0; }
+
+/* Case à cocher */
+.lh-login-check { display: inline-flex; align-items: center; gap: .625rem; min-height: 40px; color: rgba(255, 255, 255, .90); font-size: .9375rem; cursor: pointer; user-select: none; }
+.lh-login-check__box {
+    display: grid; place-items: center; flex: none; width: 20px; height: 20px;
+    color: #fff; background: var(--lh-login-field-bg); border: 1.5px solid rgba(255, 255, 255, .46); border-radius: 6px;
+    transition: background-color .15s, border-color .15s, box-shadow .15s;
+}
+.lh-login-check__box .lh-login-icon { width: 12px; height: 12px; stroke-width: 3; opacity: 0; transform: scale(.6); transition: opacity .15s, transform .15s; }
+.lh-login-check:hover .lh-login-check__box { border-color: var(--lh-login-accent); }
+.lh-login-check input:checked + .lh-login-check__box { background: var(--lh-login-brand); border-color: var(--lh-login-accent); }
+.lh-login-check input:checked + .lh-login-check__box .lh-login-icon { opacity: 1; transform: none; }
+.lh-login-check input:focus-visible + .lh-login-check__box { border-color: var(--lh-login-accent); box-shadow: var(--lh-login-ring); }
+
+/* ---------- Bouton principal ---------- */
+.lh-login-btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: .625rem;
+    width: 100%; height: var(--lh-login-btn-h); padding: 0 1.25rem;
+    color: #fff; font-size: 1rem; font-weight: 600;
+    background: var(--lh-login-brand);
+    border: 1px solid rgba(255, 255, 255, .22); border-radius: var(--lh-login-radius-field); cursor: pointer;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, .24),
+        0 1px 2px rgba(20, 8, 60, .35),
+        0 12px 24px -10px rgba(76, 29, 149, .95);
+    transition: background-color .15s, box-shadow .15s, transform .1s;
+    -webkit-tap-highlight-color: transparent;
+}
+.lh-login-btn:hover { background: var(--lh-login-brand-dark); }
+.lh-login-btn:active { transform: translateY(1px); }
+.lh-login-btn:focus-visible { outline: none; box-shadow: 0 0 0 4px rgba(196, 181, 253, .50); }
+.lh-login-btn__spinner {
+    display: none; width: 18px; height: 18px;
+    border: 2px solid rgba(255, 255, 255, .35); border-top-color: #fff; border-radius: 50%;
+    animation: lh-login-spin .7s linear infinite;
+}
+.lh-login-btn.is-loading { background: var(--lh-login-brand-dark); cursor: progress; pointer-events: none; }
+.lh-login-btn.is-loading .lh-login-btn__spinner { display: block; }
+@keyframes lh-login-spin { to { transform: rotate(360deg); } }
+
+/* ---------- Pied de carte ---------- */
+.lh-login-switch {
+    margin-top: var(--lh-login-gap-lg); padding-top: var(--lh-login-gap-md); border-top: 1px solid var(--lh-login-line);
+    color: var(--lh-login-text-soft); font-size: .9375rem; text-align: center;
+}
+.lh-login-switch a { color: var(--lh-login-accent); font-weight: 600; text-decoration: none; }
+.lh-login-switch a:hover { color: #fff; text-decoration: underline; }
+.lh-login-switch a:focus-visible { outline: 2px solid var(--lh-login-accent); outline-offset: 3px; border-radius: 4px; }
+
+/* ---------- Adaptations de largeur ---------- */
+/* Tablette : carte compacte, la photo reste visible autour */
+@media (max-width: 959px) {
+    .lh-login-card { max-width: 400px; }
+}
+
+/* Mobile : carte presque pleine largeur (petite marge latérale), cadrage recentré, flou allégé */
+@media (max-width: 599px) {
+    .lh-login-page {
+        --lh-login-focus-point: 62% 30%;
+        --lh-login-glass-blur: 16px;
+        --lh-login-card-pad-x: 1.25rem;
+    }
+    .lh-login-card { max-width: none; border-radius: 20px; }
+    .lh-login-title { font-size: 1.5rem; }
+}
+@media (max-width: 359px) {
+    .lh-login-page { --lh-login-card-pad-x: 1rem; }
+    /* « Mot de passe » et « Mot de passe oublié ? » restent sur une seule ligne */
+    .lh-login-label-row { gap: .125rem .5rem; }
+    .lh-login-link { font-size: .75rem; }
+}
+
+/* ---------- Adaptations de hauteur : on compacte, on ne défile pas ---------- */
+/* Quand un bandeau d'alerte est affiché, le sous-titre cède la place */
+@media (max-height: 880px) {
+    .lh-login-card:has(.lh-login-alert) .lh-login-sub { display: none; }
+}
+@media (max-height: 760px) {
+    .lh-login-page { --lh-login-card-pad-y: 26px; }
+    .lh-login-card:has(.lh-login-alert) .lh-login-logo { margin-bottom: .5rem; }
+    .lh-login-card:has(.lh-login-alert) .lh-login-head { margin-bottom: .625rem; }
+    .lh-login-card:has(.lh-login-alert) .lh-login-switch { margin-top: .75rem; padding-top: .625rem; }
+}
+@media (max-height: 700px) {
+    .lh-login-page { --lh-login-gap-sm: 10px; --lh-login-gap-lg: 14px; --lh-login-head-gap: 14px; }
+    .lh-login-title { font-size: 1.4rem; }
+    .lh-login-check { min-height: 36px; }
+    .lh-login-label-row,
+    .lh-login-field > .lh-login-label { margin-bottom: .3rem; }
+    .lh-login-alert { font-size: .8125rem; line-height: 1.35; }
+}
+@media (max-height: 640px) {
+    .lh-login-page { --lh-login-card-pad-y: 18px; --lh-login-gap-md: 10px; --lh-login-gap-lg: 10px; --lh-login-head-gap: 10px; }
+    .lh-login-sub { display: none; }
+    .lh-login-switch { margin-top: 10px; padding-top: 10px; font-size: .875rem; }
+    .lh-login-error { margin-top: .25rem; }
+    /* L'alerte garde son titre ; la phrase d'aide générique cède la place
+       (le message de validation Laravel reste affiché sous le champ concerné) */
+    .lh-login-alert { padding-block: 7px; }
+    .lh-login-alert > div > p:not(.lh-login-alert__title) { display: none; }
+}
+@media (max-height: 560px) {
+    .lh-login-page { --lh-login-card-pad-y: 14px; --lh-login-gap-sm: 8px; --lh-login-input-h: 42px; --lh-login-btn-h: 44px; }
+    .lh-login-check { min-height: 30px; }
+    .lh-login-field--check { margin-bottom: 8px; }
+    .lh-login-logo { margin-bottom: 6px; }
+    .lh-login-logo__name { font-size: 1.25rem; }
+}
+/* Très petits viewports (téléphone en paysage) */
+@media (max-height: 440px) {
+    .lh-login-page { --lh-login-card-pad-y: 12px; --lh-login-input-h: 40px; --lh-login-btn-h: 42px; }
+    .lh-login-switch { margin-top: 6px; padding-top: 6px; border-top-color: transparent; }
+    .lh-login-field--check { margin-bottom: 4px; }
+    .lh-login-check { min-height: 26px; }
+    .lh-login-head { margin-bottom: 8px; }
+    .lh-login-logo { margin-bottom: 4px; }
+    .lh-login-title { font-size: 1.25rem; }
+}
+@media (max-height: 380px) {
+    .lh-login-page { --lh-login-card-pad-y: 8px; --lh-login-input-h: 38px; --lh-login-btn-h: 40px; --lh-login-gap-sm: 6px; }
+    .lh-login-label { font-size: .8125rem; }
+}
+
+/* ---------- Préférences d'accessibilité ---------- */
+/* Transparence réduite : verre quasi opaque, sans flou */
+@media (prefers-reduced-transparency: reduce) {
+    .lh-login-card {
+        background-color: rgba(20, 14, 58, .96);
+        -webkit-backdrop-filter: none;
+                backdrop-filter: none;
+    }
+}
+/* Contraste renforcé : bordures et champs plus marqués */
+@media (prefers-contrast: more) {
+    .lh-login-card { border-color: rgba(255, 255, 255, .6); background-color: rgba(20, 14, 58, .92); }
+    .lh-login-input { border-color: rgba(255, 255, 255, .7); }
+}
+/* Mouvement réduit */
+@media (prefers-reduced-motion: reduce) {
+    .lh-login-page *, .lh-login-page *::before, .lh-login-page *::after {
+        animation-duration: .01ms !important; transition-duration: .01ms !important;
+    }
+    .lh-login-btn__spinner { animation-duration: 1.4s !important; }
+}

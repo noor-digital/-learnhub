@@ -1,0 +1,417 @@
+/* ==========================================================================
+   LearnHub — Page d'inscription immersive (verre dépoli / glassmorphism)
+   Fichier : public/css/learnhub-register.css
+   Chargé uniquement par resources/views/auth/register.blade.php.
+   Indépendant de learnhub-login.css : toutes les classes sont préfixées
+   « lh-register- », aucun impact sur la connexion ni sur les autres pages.
+   Image : public/images/auth/campus-login.jpg (la même que la connexion).
+
+   Mise en page :
+   - la page fait exactement la hauteur du viewport (100dvh, repli 100vh) ;
+   - la carte est centrée par flexbox ;
+   - aucun scroll : espacements et hauteurs se compactent selon la hauteur
+     disponible (clamp + dvh, puis paliers).
+
+   Réglages rapides : --lh-register-glass, --lh-register-glass-blur,
+   --lh-register-focus-point.
+   ========================================================================== */
+
+/* Le corps ne défile jamais (la propriété se propage au viewport) */
+.lh-register-body {
+    margin: 0;
+    overflow: hidden;
+    overscroll-behavior: none;
+}
+
+.lh-register-page {
+    /* Marque */
+    --lh-register-brand:       #7c3aed;
+    --lh-register-brand-dark:  #6d28d9;
+    --lh-register-accent:      #c4b5fd;
+
+    /* Texte sur verre sombre */
+    --lh-register-text:        #ffffff;
+    --lh-register-text-soft:   rgba(255, 255, 255, .80);
+    --lh-register-text-faint:  rgba(255, 255, 255, .66);
+    --lh-register-icon-color:  rgba(255, 255, 255, .66);
+
+    /* Verre : teinte indigo bleutée, semi-transparente */
+    --lh-register-glass:          rgba(24, 20, 72, .56);
+    --lh-register-glass-fallback: rgba(20, 14, 58, .86);   /* si backdrop-filter absent */
+    --lh-register-glass-sheen:    rgba(255, 255, 255, .13);
+    --lh-register-glass-edge:     rgba(255, 255, 255, .26);
+    --lh-register-glass-blur:     22px;
+
+    /* Champs */
+    --lh-register-field-bg:        rgba(12, 8, 44, .34);
+    --lh-register-field-bg-focus:  rgba(12, 8, 44, .48);
+    --lh-register-field-line:      rgba(255, 255, 255, .30);
+    --lh-register-field-line-hover:rgba(255, 255, 255, .52);
+
+    /* États */
+    --lh-register-line:        rgba(255, 255, 255, .18);
+    --lh-register-danger:      #ff9b90;
+    --lh-register-danger-text: #ffd9d4;
+    --lh-register-danger-bg:   rgba(180, 35, 24, .34);
+    --lh-register-danger-line: rgba(255, 155, 144, .50);
+
+    --lh-register-radius-card:  22px;
+    --lh-register-radius-field: 12px;
+    --lh-register-ring:         0 0 0 4px rgba(196, 181, 253, .34);
+
+    /* Cadrage de la photo (x y) */
+    --lh-register-focus-point:  55% 40%;
+
+    /* Espacements fluides (repli en vh ; surcharge en dvh juste après) */
+    --lh-register-page-pad-y: clamp(8px, 2vh, 32px);
+    --lh-register-page-pad-x: clamp(10px, 3.5vw, 16px);
+    --lh-register-card-pad-x: 2.5rem;
+    --lh-register-card-pad-y: clamp(14px, 4.2vh, 40px);
+    --lh-register-gap:        clamp(7px, 1.9vh, 18px);    /* entre champs */
+    --lh-register-head-gap:   clamp(10px, 2.9vh, 28px);
+    --lh-register-logo-gap:   clamp(6px, 2.6vh, 24px);
+    --lh-register-btn-gap:    clamp(4px, 1.4vh, 12px);
+    --lh-register-switch-pt:  clamp(8px, 2.2vh, 20px);
+    --lh-register-input-h:    clamp(40px, 6.4vh, 50px);
+    --lh-register-btn-h:      clamp(42px, 6.7vh, 52px);
+    --lh-register-alert-pad:  clamp(6px, 1.4vh, 12px);
+    --lh-register-alert-gap:  clamp(6px, 1.8vh, 16px);
+
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    align-items: center;          /* centrage vertical */
+    justify-content: center;      /* centrage horizontal */
+    width: 100%;
+    height: 100vh;                /* repli */
+    height: 100dvh;               /* viewport dynamique (barres mobiles) */
+    padding: var(--lh-register-page-pad-y) var(--lh-register-page-pad-x);
+    overflow: hidden;
+    color: var(--lh-register-text);
+    font-family: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+    font-size: 1rem;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -webkit-text-size-adjust: 100%;
+}
+@supports (height: 100dvh) {
+    .lh-register-page {
+        --lh-register-page-pad-y: clamp(8px, 2dvh, 32px);
+        --lh-register-card-pad-y: clamp(14px, 4.2dvh, 40px);
+        --lh-register-gap:        clamp(7px, 1.9dvh, 18px);
+        --lh-register-head-gap:   clamp(10px, 2.9dvh, 28px);
+        --lh-register-logo-gap:   clamp(6px, 2.6dvh, 24px);
+        --lh-register-btn-gap:    clamp(4px, 1.4dvh, 12px);
+        --lh-register-switch-pt:  clamp(8px, 2.2dvh, 20px);
+        --lh-register-input-h:    clamp(40px, 6.4dvh, 50px);
+        --lh-register-btn-h:      clamp(42px, 6.7dvh, 52px);
+        --lh-register-alert-pad:  clamp(6px, 1.4dvh, 12px);
+        --lh-register-alert-gap:  clamp(6px, 1.8dvh, 16px);
+    }
+}
+.lh-register-page,
+.lh-register-page *,
+.lh-register-page *::before,
+.lh-register-page *::after { box-sizing: border-box; }
+.lh-register-page h1,
+.lh-register-page p { margin: 0; }
+.lh-register-page button,
+.lh-register-page input { font: inherit; }
+
+.lh-register-icon {
+    flex: none; width: 20px; height: 20px;
+    fill: none; stroke: currentColor; stroke-width: 1.75;
+    stroke-linecap: round; stroke-linejoin: round;
+}
+
+/* ---------- Arrière-plan : photo + voile indigo + secours ---------- */
+.lh-register-bg {
+    position: fixed; inset: 0; z-index: -1;
+    background:
+        linear-gradient(180deg, rgba(34, 14, 88, .42) 0%, rgba(34, 14, 88, .30) 45%, rgba(14, 6, 40, .66) 100%),
+        url("../images/auth/campus-login.jpg") var(--lh-register-focus-point) / cover no-repeat,
+        linear-gradient(135deg, #2e1a73 0%, #140a35 100%);
+}
+
+/* ---------- Phrase d'ambiance (grands écrans uniquement) ---------- */
+.lh-register-quote {
+    display: none;
+    position: fixed; left: 2.5rem; bottom: 2.25rem;
+    max-width: 20rem;
+    color: #fff; font-size: 1.5rem; font-weight: 600; line-height: 1.25; letter-spacing: -.01em;
+    text-shadow: 0 1px 14px rgba(10, 5, 30, .55);
+}
+@media (min-width: 1200px) and (min-height: 700px) { .lh-register-quote { display: block; } }
+
+/* ---------- Carte : verre dépoli ---------- */
+.lh-register-card {
+    position: relative;
+    flex: 0 1 auto;
+    width: 100%; max-width: 420px;
+    padding: var(--lh-register-card-pad-y) var(--lh-register-card-pad-x);
+    color: var(--lh-register-text);
+    overflow-wrap: break-word;
+    /* Secours (navigateur sans backdrop-filter) : verre plus opaque */
+    background-color: var(--lh-register-glass-fallback);
+    background-image: linear-gradient(155deg, var(--lh-register-glass-sheen) 0%, rgba(255, 255, 255, 0) 42%);
+    border: 1px solid var(--lh-register-glass-edge);
+    border-radius: var(--lh-register-radius-card);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, .30),
+        inset 0 0 0 1px rgba(255, 255, 255, .04),
+        0 2px 6px rgba(8, 4, 28, .20),
+        0 32px 72px -24px rgba(8, 4, 28, .70);
+    animation: lh-register-in .28s ease-out both;
+}
+@supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+    .lh-register-card {
+        background-color: var(--lh-register-glass);
+        -webkit-backdrop-filter: blur(var(--lh-register-glass-blur)) saturate(150%);
+                backdrop-filter: blur(var(--lh-register-glass-blur)) saturate(150%);
+    }
+}
+@keyframes lh-register-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+.lh-register-head { margin-bottom: var(--lh-register-head-gap); text-align: center; }
+.lh-register-logo {
+    display: inline-flex; align-items: center; gap: .625rem; margin-bottom: var(--lh-register-logo-gap);
+    color: var(--lh-register-text); text-decoration: none;
+}
+.lh-register-logo:focus-visible { outline: 2px solid var(--lh-register-accent); outline-offset: 4px; border-radius: 8px; }
+.lh-register-logo__mark {
+    display: grid; place-items: center; width: 38px; height: 38px;
+    color: #fff; background: var(--lh-register-brand); border-radius: 11px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .28), 0 6px 14px -6px rgba(76, 29, 149, .9);
+}
+.lh-register-logo__name { font-size: 1.375rem; font-weight: 700; letter-spacing: -.01em; }
+.lh-register-title { font-size: 1.625rem; font-weight: 700; line-height: 1.2; letter-spacing: -.02em; }
+.lh-register-sub { color: var(--lh-register-text-soft); font-size: .9375rem; }
+
+/* ---------- Alerte ---------- */
+.lh-register-alert {
+    display: flex; gap: .625rem; margin-bottom: var(--lh-register-alert-gap);
+    padding: var(--lh-register-alert-pad) .875rem;
+    color: var(--lh-register-danger-text); background: var(--lh-register-danger-bg);
+    border: 1px solid var(--lh-register-danger-line); border-radius: var(--lh-register-radius-field);
+    font-size: .875rem; line-height: 1.4;
+}
+.lh-register-alert > div { min-width: 0; }
+.lh-register-alert .lh-register-icon { width: 18px; height: 18px; margin-top: 1px; color: var(--lh-register-danger); }
+.lh-register-alert__title { font-weight: 600; }
+
+/* ---------- Champs ---------- */
+.lh-register-field { margin-bottom: var(--lh-register-gap); }
+.lh-register-label { display: block; margin-bottom: .4rem; color: rgba(255, 255, 255, .94); font-size: .875rem; font-weight: 600; }
+
+.lh-register-control { position: relative; }
+.lh-register-control__icon {
+    position: absolute; left: 14px; top: 50%; margin-top: -10px;
+    color: var(--lh-register-icon-color); pointer-events: none; transition: color .15s;
+}
+.lh-register-control:focus-within .lh-register-control__icon { color: var(--lh-register-accent); }
+
+.lh-register-input {
+    display: block; width: 100%; height: var(--lh-register-input-h); padding: 0 14px 0 44px;
+    color: var(--lh-register-text); caret-color: #fff; font-size: 1rem;
+    color-scheme: dark;
+    background: var(--lh-register-field-bg);
+    border: 1px solid var(--lh-register-field-line); border-radius: var(--lh-register-radius-field);
+    outline: none; -webkit-appearance: none; appearance: none;
+    transition: border-color .15s, box-shadow .15s, background-color .15s;
+}
+.lh-register-input--pwd { padding-right: 48px; }
+.lh-register-input::placeholder { color: var(--lh-register-text-faint); opacity: 1; }
+.lh-register-input:hover { border-color: var(--lh-register-field-line-hover); }
+.lh-register-input:focus { background: var(--lh-register-field-bg-focus); border-color: var(--lh-register-accent); box-shadow: var(--lh-register-ring); }
+.lh-register-input.is-invalid { border-color: var(--lh-register-danger); }
+.lh-register-input.is-invalid:focus { box-shadow: 0 0 0 4px rgba(255, 155, 144, .28); }
+
+/* Remplissage automatique du navigateur : reste sombre et lisible */
+.lh-register-input:-webkit-autofill,
+.lh-register-input:-webkit-autofill:hover,
+.lh-register-input:-webkit-autofill:active {
+    -webkit-text-fill-color: #fff;
+    caret-color: #fff;
+    -webkit-box-shadow: 0 0 0 1000px #251c63 inset;
+            box-shadow: 0 0 0 1000px #251c63 inset;
+    border-color: var(--lh-register-field-line);
+    transition: background-color 600000s 0s, color 600000s 0s;
+}
+.lh-register-input:-webkit-autofill:focus {
+    -webkit-text-fill-color: #fff;
+    -webkit-box-shadow: 0 0 0 1000px #2d2373 inset, 0 0 0 4px rgba(196, 181, 253, .34);
+            box-shadow: 0 0 0 1000px #2d2373 inset, 0 0 0 4px rgba(196, 181, 253, .34);
+    border-color: var(--lh-register-accent);
+}
+
+.lh-register-toggle {
+    position: absolute; right: 5px; top: 50%; width: 40px; height: 40px; margin-top: -20px;
+    display: grid; place-items: center; padding: 0;
+    color: var(--lh-register-text-soft); background: transparent; border: 0; border-radius: 8px; cursor: pointer;
+    transition: color .15s, background-color .15s;
+}
+.lh-register-toggle:hover { color: #fff; background: rgba(255, 255, 255, .12); }
+.lh-register-toggle:focus-visible { outline: 2px solid var(--lh-register-accent); outline-offset: -2px; }
+.lh-register-toggle .lh-register-icon--off,
+.lh-register-toggle[aria-pressed="true"] .lh-register-icon--on { display: none; }
+.lh-register-toggle[aria-pressed="true"] .lh-register-icon--off { display: block; }
+
+.lh-register-error {
+    display: flex; align-items: flex-start; gap: .375rem;
+    color: var(--lh-register-danger-text); font-size: .8125rem; line-height: 1.35;
+}
+.lh-register-error .lh-register-icon { width: 16px; height: 16px; margin-top: 2px; color: var(--lh-register-danger); }
+.lh-register-error span { min-width: 0; }
+
+/* ---------- Bouton principal ---------- */
+.lh-register-btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: .625rem;
+    width: 100%; height: var(--lh-register-btn-h); margin-top: var(--lh-register-btn-gap); padding: 0 1.25rem;
+    color: #fff; font-size: 1rem; font-weight: 600;
+    background: var(--lh-register-brand);
+    border: 1px solid rgba(255, 255, 255, .22); border-radius: var(--lh-register-radius-field); cursor: pointer;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, .24),
+        0 1px 2px rgba(20, 8, 60, .35),
+        0 12px 24px -10px rgba(76, 29, 149, .95);
+    transition: background-color .15s, box-shadow .15s, transform .1s;
+    -webkit-tap-highlight-color: transparent;
+}
+.lh-register-btn:hover { background: var(--lh-register-brand-dark); }
+.lh-register-btn:active { transform: translateY(1px); }
+.lh-register-btn:focus-visible { outline: none; box-shadow: 0 0 0 4px rgba(196, 181, 253, .50); }
+.lh-register-btn__spinner {
+    display: none; width: 18px; height: 18px;
+    border: 2px solid rgba(255, 255, 255, .35); border-top-color: #fff; border-radius: 50%;
+    animation: lh-register-spin .7s linear infinite;
+}
+.lh-register-btn.is-loading { background: var(--lh-register-brand-dark); cursor: progress; pointer-events: none; }
+.lh-register-btn.is-loading .lh-register-btn__spinner { display: block; }
+@keyframes lh-register-spin { to { transform: rotate(360deg); } }
+
+/* ---------- Pied de carte ---------- */
+.lh-register-switch {
+    margin-top: var(--lh-register-switch-pt); padding-top: var(--lh-register-switch-pt);
+    border-top: 1px solid var(--lh-register-line);
+    color: var(--lh-register-text-soft); font-size: .9375rem; text-align: center;
+}
+.lh-register-switch a { color: var(--lh-register-accent); font-weight: 600; text-decoration: none; }
+.lh-register-switch a:hover { color: #fff; text-decoration: underline; }
+.lh-register-switch a:focus-visible { outline: 2px solid var(--lh-register-accent); outline-offset: 3px; border-radius: 4px; }
+
+/* ---------- Adaptations de largeur ---------- */
+@media (max-width: 959px) {
+    .lh-register-card { max-width: 400px; }
+}
+@media (max-width: 599px) {
+    .lh-register-page {
+        --lh-register-focus-point: 62% 30%;
+        --lh-register-glass-blur: 16px;
+        --lh-register-card-pad-x: 1.25rem;
+    }
+    .lh-register-card { max-width: none; border-radius: 20px; }
+    .lh-register-title { font-size: 1.5rem; }
+}
+@media (max-width: 359px) {
+    .lh-register-page { --lh-register-card-pad-x: 1rem; }
+}
+
+/* ---------- Adaptations de hauteur : on compacte, on ne défile pas ---------- */
+/* Quand une alerte est affichée, le sous-titre cède la place */
+@media (max-height: 900px) {
+    .lh-register-card:has(.lh-register-alert) .lh-register-sub { display: none; }
+}
+
+/* Paliers génériques (formulaire sans alerte) */
+@media (max-height: 800px) {
+    .lh-register-page { --lh-register-card-pad-y: 24px; --lh-register-gap: 10px; }
+}
+@media (max-height: 740px) {
+    .lh-register-page { --lh-register-card-pad-y: 20px; --lh-register-gap: 9px; --lh-register-head-gap: 12px; --lh-register-logo-gap: 8px; --lh-register-input-h: 42px; --lh-register-btn-h: 44px; --lh-register-switch-pt: 10px; }
+    .lh-register-title { font-size: 1.4rem; }
+    .lh-register-label { margin-bottom: .3rem; }
+}
+@media (max-height: 640px) {
+    .lh-register-page { --lh-register-card-pad-y: 16px; --lh-register-gap: 7px; --lh-register-head-gap: 8px; --lh-register-logo-gap: 4px; --lh-register-btn-gap: 2px; --lh-register-input-h: 40px; --lh-register-btn-h: 42px; --lh-register-switch-pt: 8px; }
+    .lh-register-sub { display: none; }
+    .lh-register-label { font-size: .8125rem; margin-bottom: .2rem; }
+    .lh-register-switch { font-size: .875rem; }
+}
+
+/* Paliers avec alerte : plus serrés, car le bandeau et les erreurs de champ ajoutent de la hauteur
+   (les messages de validation Laravel restent affichés sous chaque champ) */
+@media (max-height: 880px) {
+    .lh-register-page:has(.lh-register-alert) {
+        --lh-register-card-pad-y: 20px; --lh-register-gap: 8px; --lh-register-head-gap: 10px; --lh-register-logo-gap: 6px;
+        --lh-register-btn-gap: 2px; --lh-register-input-h: 42px; --lh-register-btn-h: 44px; --lh-register-switch-pt: 8px;
+        --lh-register-alert-gap: 8px; --lh-register-alert-pad: 6px;
+    }
+    .lh-register-card:has(.lh-register-alert) .lh-register-title { font-size: 1.4rem; }
+    .lh-register-card:has(.lh-register-alert) .lh-register-label { margin-bottom: .25rem; }
+    .lh-register-alert > div > p:not(.lh-register-alert__title) { display: none; }
+}
+@media (max-height: 740px) {
+    .lh-register-page:has(.lh-register-alert) {
+        --lh-register-card-pad-y: 16px; --lh-register-gap: 6px; --lh-register-head-gap: 8px; --lh-register-logo-gap: 4px;
+        --lh-register-input-h: 40px; --lh-register-btn-h: 42px; --lh-register-switch-pt: 6px;
+    }
+}
+@media (max-height: 640px) {
+    .lh-register-page:has(.lh-register-alert) {
+        --lh-register-card-pad-y: 12px; --lh-register-gap: 5px; --lh-register-head-gap: 6px; --lh-register-logo-gap: 2px;
+        --lh-register-input-h: 38px; --lh-register-btn-h: 40px;
+    }
+}
+
+/* Écran bas + alerte : le logo cède la place aux messages (le lien d'accueil reste dans le DOM) */
+@media (max-height: 600px) {
+    .lh-register-card:has(.lh-register-alert) .lh-register-logo { display: none; }
+    .lh-register-card:has(.lh-register-alert) .lh-register-error { font-size: .75rem; line-height: 1.3; }
+}
+
+/* Écrans très bas (portrait) : tout est resserré au maximum */
+@media (max-height: 540px) {
+    .lh-register-page,
+    .lh-register-page:has(.lh-register-alert) {
+        --lh-register-card-pad-y: 12px; --lh-register-gap: 5px; --lh-register-head-gap: 6px; --lh-register-logo-gap: 2px;
+        --lh-register-btn-gap: 2px; --lh-register-input-h: 38px; --lh-register-btn-h: 40px; --lh-register-switch-pt: 6px;
+    }
+    .lh-register-title { font-size: 1.3rem; }
+    .lh-register-logo__name { font-size: 1.25rem; }
+}
+
+/* Viewports minuscules (≤ 500 px de haut) */
+@media (max-height: 500px) {
+    .lh-register-page,
+    .lh-register-page:has(.lh-register-alert) { --lh-register-card-pad-y: 8px; }
+    .lh-register-title { font-size: 1.2rem; }
+}
+
+/* Paysage bas (téléphone couché) : champs sur deux colonnes, en-tête sur une ligne */
+@media (max-height: 520px) and (min-width: 600px) {
+    .lh-register-card { max-width: 640px; }
+    .lh-register-head { display: flex; align-items: center; justify-content: center; gap: .25rem 1.25rem; }
+    .lh-register-logo { margin-bottom: 0; }
+    .lh-register-title { font-size: 1.3rem; }
+    .lh-register-form { display: grid; grid-template-columns: 1fr 1fr; column-gap: 14px; align-items: start; }
+    .lh-register-form .lh-register-btn { grid-column: 1 / -1; }
+}
+
+/* ---------- Préférences d'accessibilité ---------- */
+@media (prefers-reduced-transparency: reduce) {
+    .lh-register-card {
+        background-color: rgba(20, 14, 58, .96);
+        -webkit-backdrop-filter: none;
+                backdrop-filter: none;
+    }
+}
+@media (prefers-contrast: more) {
+    .lh-register-card { border-color: rgba(255, 255, 255, .6); background-color: rgba(20, 14, 58, .92); }
+    .lh-register-input { border-color: rgba(255, 255, 255, .7); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .lh-register-page *, .lh-register-page *::before, .lh-register-page *::after {
+        animation-duration: .01ms !important; transition-duration: .01ms !important;
+    }
+    .lh-register-btn__spinner { animation-duration: 1.4s !important; }
+}
