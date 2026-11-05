@@ -178,6 +178,27 @@ class CourseController extends Controller
             ->with('success', 'Le cours "' . $course->title . '" a été archivé. Son historique est conservé.');
     }
 
+    /**
+     * Restore an archived course as an unpublished draft.
+     */
+    public function restore(Course $course)
+    {
+        $this->authorize('update', $course);
+
+        if (! $course->archived_at) {
+            return redirect()->route('courses.show', $course)
+                ->with('status', 'Ce cours n\'est pas archivé.');
+        }
+
+        $course->update([
+            'archived_at' => null,
+            'is_published' => false,
+        ]);
+
+        return redirect()->route('courses.edit', $course)
+            ->with('success', 'Le cours a été restauré en brouillon. Vérifiez-le avant de le republier.');
+    }
+
     // ─────────────────────────────────────────────────────
     // Méthode privée — vérifie le rôle de l'utilisateur
     // ─────────────────────────────────────────────────────
