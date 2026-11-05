@@ -302,4 +302,70 @@ class CourseAccessAndQuizSafetyTest extends TestCase
 
         $this->assertSame([$activeCourse->id], $courseIds);
     }
+
+    public function test_pending_student_cannot_open_or_submit_a_quiz(): void
+    {
+        $owner = $this->makeUser('formateur');
+        $student = $this->makeUser();
+        $course = $this->makeCourse($owner);
+        $quiz = Quiz::create([
+            'course_id' => $course->id,
+            'title' => 'Quiz protégé',
+            'pass_score' => 70,
+            'is_active' => true,
+        ]);
+        $question = Question::create([
+            'quiz_id' => $quiz->id,
+            'question_text' => 'Question protégée ?',
+            'order' => 1,
+        ]);
+        $answer = Answer::create([
+            'question_id' => $question->id,
+            'answer_text' => 'Réponse correcte',
+            'is_correct' => true,
+        ]);
+        $this->enroll($student, $course, 'pending');
+
+        $this->actingAs($student)
+            ->get(route('quiz.show', $course))
+            ->assertForbidden();
+
+        $this->actingAs($student)
+            ->post(route('quiz.submit', $course), [
+                'answers' => [$question->id => $answer->id],
+            ])
+            ->assertForbidden();
+
+        $this->assertDatabaseMissing('quiz_results', [
+            'quiz_id' => $quiz->id,
+            'user_id' => $student->id,
+        ]);
+    }
+
+    public function test_certificate_requires_every_lesson_even_if_stored_progress_is_100(): void
+    {
+        $owner = $this->makeUser('formateur');
+        $student = $this->makeUser();
+        $course = $this->makeCourse($owner);
+        $completedLesson = Lesson::create([
+            'course_id' => $course->id,
+            'title' => 'Leçon terminée',
+            'duration' => 10,
+            'order' => 1,
+        ]);
+        Lesson::create([
+            'course_id' => $course->id,
+            'title' => 'Leçon non terminée',
+            'duration' => 10,
+            'order' => 2,
+        ]);
+        $this->enroll($student, $course, 'free', 100);
+        $completedLesson->completedByUsers()->attach($student->id, [
+            'completed_at' => now(),
+        ]);
+
+        $this->actingAs($student)
+            ->get(route('certificate.generate', $course))
+            ->assertForbidden();
+    }
 }
