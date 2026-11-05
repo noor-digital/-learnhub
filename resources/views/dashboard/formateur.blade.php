@@ -708,6 +708,14 @@ body { background: var(--bg) !important; }
                                            class="act-btn solid" title="Ajouter leçon">
                                             <i class="bi bi-plus-lg"></i>
                                         </a>
+                                        <form method="POST" action="{{ route('courses.destroy', $course) }}"
+                                              onsubmit="return confirm('Archiver ce cours ? Les inscriptions et les résultats seront conservés.');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="act-btn" title="Archiver le cours">
+                                                <i class="bi bi-archive"></i>
+                                            </button>
+                                        </form>
                                     @endif
                                 </div>
                             </td>
