@@ -28,19 +28,22 @@ class PaymentController extends Controller
             'Seuls les étudiants peuvent acheter un cours.'
         );
 
-        // Déjà inscrit ? On redirige vers le cours avec un message adapté
+        abort_unless($course->is_published, 404);
+
+        // Une inscription active ne doit pas repasser par le paiement.
         $enrollment = Enrollment::where('user_id', $user->id)
             ->where('course_id', $course->id)
             ->first();
 
-        if ($enrollment) {
+        if ($enrollment && in_array($enrollment->payment_status, ['free', 'paid'], true)) {
             return $this->redirectAlreadyEnrolled($course, $enrollment);
         }
 
-        // Cours gratuit : l'inscription passe par la route d'inscription
-        // gratuite, qui est la seule à créer l'inscription.
+        // Un cours gratuit doit être rejoint depuis son formulaire d'inscription.
         if ($this->isFree($course)) {
-            return redirect()->route('enrollments.store', $course);
+            return redirect()
+                ->route('courses.show', $course)
+                ->with('info', 'Ce cours est gratuit : utilisez le bouton d’inscription.');
         }
 
         return view('payment.show', compact('course'));
@@ -64,29 +67,36 @@ class PaymentController extends Controller
             'Seuls les étudiants peuvent acheter un cours.'
         );
 
-        // Un cours gratuit ne passe jamais par le paiement simulé
+        abort_unless($course->is_published, 404);
+
+        // Un cours gratuit ne passe jamais par le paiement simulé.
         if ($this->isFree($course)) {
             return redirect()
                 ->route('courses.show', $course)
-                ->with('error', 'Ce cours est gratuit : veuillez utiliser l\'inscription gratuite.');
+                ->with('info', 'Ce cours est gratuit : utilisez le bouton d’inscription.');
         }
 
-        // Re-vérification de l'inscription au moment du traitement, dans une
-        // transaction verrouillant la ligne du cours pour limiter les doublons
-        // en cas de double soumission simultanée.
+        // Verrouille le cours pour éviter les inscriptions concurrentes.
+        // Une inscription pending est activée sans perdre sa progression.
         $existing = DB::transaction(function () use ($user, $course) {
             Course::whereKey($course->id)->lockForUpdate()->first();
 
             $enrollment = Enrollment::where('user_id', $user->id)
                 ->where('course_id', $course->id)
+                ->lockForUpdate()
                 ->first();
 
             if ($enrollment) {
-                return $enrollment;
+                if (in_array($enrollment->payment_status, ['free', 'paid'], true)) {
+                    return $enrollment;
+                }
+
+                $enrollment->update(['payment_status' => 'paid']);
+
+                return null;
             }
 
-            // Paiement SIMULÉ : l'inscription est créée avec le statut
-            // 'paid' uniquement dans le cadre de cette simulation.
+            // Paiement SIMULÉ : aucun prestataire réel n'est contacté.
             Enrollment::create([
                 'user_id'        => $user->id,
                 'course_id'      => $course->id,
@@ -128,11 +138,9 @@ class PaymentController extends Controller
      */
     private function redirectAlreadyEnrolled(Course $course, Enrollment $enrollment): RedirectResponse
     {
-        $expectedStatus = $this->isFree($course) ? 'free' : 'paid';
-
-        $message = $enrollment->payment_status === $expectedStatus
+        $message = in_array($enrollment->payment_status, ['free', 'paid'], true)
             ? 'Vous êtes déjà inscrit à ce cours.'
-            : 'Une inscription existe déjà pour ce cours : aucun nouveau paiement ne peut être effectué depuis cette page.';
+            : 'Une inscription est en attente : aucun accès n’est accordé avant sa régularisation.';
 
         return redirect()
             ->route('courses.show', $course)
