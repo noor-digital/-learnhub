@@ -459,6 +459,10 @@ class CourseAccessAndQuizSafetyTest extends TestCase
         $this->actingAs($student)
             ->get(route('courses.show', $course))
             ->assertOk();
+
+        $this->get(route('dashboard.student'))
+            ->assertOk()
+            ->assertSee('Cours de test');
     }
 
     public function test_archived_course_can_only_be_restored_by_owner_as_draft(): void
