@@ -637,7 +637,11 @@ body { background: var(--bg) !important; }
 
                             {{-- Statut --}}
                             <td>
-                                @if($course->is_published)
+                                @if($course->archived_at)
+                                    <span class="pill pill-amber">
+                                        <span class="pill-dot"></span>Archivé
+                                    </span>
+                                @elseif($course->is_published)
                                     <span class="pill pill-green">
                                         <span class="pill-dot"></span>Publié
                                     </span>
@@ -692,10 +696,19 @@ body { background: var(--bg) !important; }
                                        class="act-btn" title="Voir">
                                         <i class="bi bi-eye"></i>
                                     </a>
-                                    <a href="{{ route('lessons.create', $course) }}"
-                                       class="act-btn solid" title="Ajouter leçon">
-                                        <i class="bi bi-plus-lg"></i>
-                                    </a>
+                                    @if($course->archived_at)
+                                        <form method="POST" action="{{ route('courses.restore', $course) }}">
+                                            @csrf
+                                            <button type="submit" class="act-btn solid" title="Restaurer comme brouillon">
+                                                <i class="bi bi-arrow-counterclockwise"></i>
+                                            </button>
+                                        </form>
+                                    @else
+                                        <a href="{{ route('lessons.create', $course) }}"
+                                           class="act-btn solid" title="Ajouter leçon">
+                                            <i class="bi bi-plus-lg"></i>
+                                        </a>
+                                    @endif
                                 </div>
                             </td>
                         </tr>
