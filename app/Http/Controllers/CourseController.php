@@ -100,7 +100,7 @@ class CourseController extends Controller
             abort_unless(
                 (int) auth()->id() === (int) $course->user_id || auth()->user()->isAdmin(),
                 403,
-                'Ce cours n\\'est pas encore publié.'
+                'Ce cours n\'est pas encore publié.'
             );
         }
 
