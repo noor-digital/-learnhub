@@ -17,9 +17,10 @@ class ReviewController extends Controller
     {
         $user = auth()->user();
 
-        // Seulement les étudiants inscrits peuvent laisser un avis
-        if (! $user->isEnrolledIn($course)) {
-            return back()->with('error', 'Inscris-toi au cours avant de laisser un avis.');
+        // Seuls les étudiants ayant un accès actif à un cours publié
+        // peuvent laisser un avis.
+        if (! $user->isEtudiant() || ! $course->isAccessibleBy($user)) {
+            return back()->with('error', 'Une inscription active à un cours publié est nécessaire pour laisser un avis.');
         }
 
         // Vérification : pas déjà un avis
@@ -55,7 +56,7 @@ class ReviewController extends Controller
         $user = auth()->user();
 
         // Seulement l'auteur de l'avis ou un admin peut le supprimer
-        if ($review->user_id !== $user->id && ! $user->isAdmin()) {
+        if ((int) $review->user_id !== (int) $user->id && ! $user->isAdmin()) {
             abort(403);
         }
 
