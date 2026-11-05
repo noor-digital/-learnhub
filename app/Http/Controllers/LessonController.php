@@ -158,7 +158,11 @@ class LessonController extends Controller
         $user   = auth()->user();
         $course = $lesson->course;
 
-        abort_unless($user->isEnrolledIn($course), 403, 'Inscription requise.');
+        abort_unless(
+            $course->isAccessibleBy($user),
+            403,
+            'Inscription active requise : un paiement ou une inscription gratuite valide est nécessaire.'
+        );
 
         if ($lesson->isCompletedBy($user)) {
             // detach() supprime toutes les lignes pivot de cet utilisateur
