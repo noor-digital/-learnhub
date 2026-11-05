@@ -243,4 +243,55 @@ class CourseAccessAndQuizSafetyTest extends TestCase
             ->get(route('certificate.generate', $course))
             ->assertForbidden();
     }
+
+    public function test_simulated_payment_activates_pending_enrollment_without_resetting_progress(): void
+    {
+        $owner = $this->makeUser('formateur');
+        $student = $this->makeUser();
+        $course = $this->makeCourse($owner, true, 250);
+        $enrollment = $this->enroll($student, $course, 'pending', 45);
+
+        $this->actingAs($student)
+            ->post(route('payment.process', $course))
+            ->assertRedirect(route('courses.show', $course));
+
+        $this->assertDatabaseHas('enrollments', [
+            'id' => $enrollment->id,
+            'payment_status' => 'paid',
+            'progress' => 45,
+        ]);
+    }
+
+    public function test_free_enrollment_activates_pending_record_without_resetting_progress(): void
+    {
+        $owner = $this->makeUser('formateur');
+        $student = $this->makeUser();
+        $course = $this->makeCourse($owner, true, 0);
+        $enrollment = $this->enroll($student, $course, 'pending', 30);
+
+        $this->actingAs($student)
+            ->post(route('enrollments.store', $course))
+            ->assertRedirect(route('courses.show', $course));
+
+        $this->assertDatabaseHas('enrollments', [
+            'id' => $enrollment->id,
+            'payment_status' => 'free',
+            'progress' => 30,
+        ]);
+    }
+
+    public function test_pending_enrollments_are_not_returned_as_active_student_courses(): void
+    {
+        $owner = $this->makeUser('formateur');
+        $student = $this->makeUser();
+        $pendingCourse = $this->makeCourse($owner);
+        $activeCourse = $this->makeCourse($owner);
+
+        $this->enroll($student, $pendingCourse, 'pending');
+        $this->enroll($student, $activeCourse, 'free');
+
+        $courseIds = $student->fresh()->enrolledCourses()->pluck('courses.id')->all();
+
+        $this->assertSame([$activeCourse->id], $courseIds);
+    }
 }
