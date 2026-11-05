@@ -62,7 +62,8 @@ class User extends Authenticatable
     public function isEnrolledIn(Course $course): bool
     {
         return $this->enrolledCourses()
-                    ->where('course_id', $course->id)
+                    ->where('courses.id', $course->id)
+                    ->whereIn('enrollments.payment_status', ['free', 'paid'])
                     ->exists();
     }
 
