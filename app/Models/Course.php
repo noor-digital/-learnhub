@@ -52,6 +52,7 @@ class Course extends Model
     {
         return $this->belongsToMany(User::class, 'enrollments')
                     ->withPivot('progress', 'enrolled_at', 'payment_status')
+                    ->wherePivotIn('payment_status', ['free', 'paid'])
                     ->withTimestamps();
     }
 
