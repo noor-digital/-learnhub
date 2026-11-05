@@ -12,6 +12,7 @@ class Course extends Model
         'thumbnail',
         'price',
         'is_published',
+        'archived_at',
         'user_id',
         'category_id',
     ];
