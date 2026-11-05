@@ -337,11 +337,11 @@ body { background: var(--bg) !important; }
             <div class="kpi-ic"><i class="bi bi-cash-stack"></i></div>
             <span class="kpi-badge kpi-badge-neu">estimé</span>
         </div>
-        <div class="kpi-lbl">Revenus globaux</div>
+        <div class="kpi-lbl">Paiements simulés estimés</div>
         <div class="kpi-val">
             {{ number_format($revenueGlobal, 0, ',', ' ') }} €
         </div>
-        <div class="kpi-hint">{{ $totalEnrollments }} inscriptions totales</div>
+        <div class="kpi-hint">Basé sur les inscriptions payées · aucun paiement réel</div>
     </div>
 
     <div class="kpi an" style="--c:#993c1d;--ib:#faece7;animation-delay:.2s">
