@@ -19,6 +19,7 @@ class FormateurDashboardController extends Controller
 
         $courses = Course::query()
             ->where('user_id', $user->id)
+            ->whereNull('archived_at')
             ->withCount(['students', 'lessons', 'reviews'])
             ->withCount([
                 'students as paid_students_count' => fn ($query) =>
