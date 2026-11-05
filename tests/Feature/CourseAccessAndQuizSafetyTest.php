@@ -397,4 +397,34 @@ class CourseAccessAndQuizSafetyTest extends TestCase
             ->get(route('certificate.generate', $course))
             ->assertForbidden();
     }
+
+    public function test_adding_a_lesson_recalculates_existing_student_progress(): void
+    {
+        $owner = $this->makeUser('formateur');
+        $student = $this->makeUser();
+        $course = $this->makeCourse($owner);
+        $firstLesson = Lesson::create([
+            'course_id' => $course->id,
+            'title' => 'Première leçon',
+            'duration' => 10,
+            'order' => 1,
+        ]);
+        $enrollment = $this->enroll($student, $course, 'free', 100);
+        $firstLesson->completedByUsers()->attach($student->id, [
+            'completed_at' => now(),
+        ]);
+
+        $this->actingAs($owner)
+            ->post(route('lessons.store', $course), [
+                'title' => 'Deuxième leçon',
+                'duration' => 10,
+                'order' => 2,
+            ])
+            ->assertRedirect(route('courses.show', $course));
+
+        $this->assertDatabaseHas('enrollments', [
+            'id' => $enrollment->id,
+            'progress' => 50,
+        ]);
+    }
 }
