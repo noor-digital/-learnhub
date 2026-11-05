@@ -79,7 +79,7 @@ class Course extends Model
         }
 
         // Un étudiant ne peut jamais accéder à un cours non publié.
-        if (! $this->is_published) {
+        if (! $this->is_published && ! $this->archived_at) {
             return false;
         }
 
