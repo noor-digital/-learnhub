@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -15,24 +16,15 @@ class AuthenticatedSessionController extends Controller
         return view('auth.login');
     }
 
-    public function store(Request $request): RedirectResponse
+    /**
+     * Connexion : validation, limitation des tentatives et authentification
+     * sont gérées par LoginRequest.
+     */
+    public function store(LoginRequest $request): RedirectResponse
     {
-        $request->validate([
-            'email' => ['required', 'string', 'email'],
-            'password' => ['required', 'string'],
-        ]);
+        $request->authenticate();
 
-        $credentials = $request->only('email', 'password');
-        $remember = $request->boolean('remember');
-
-        if (! Auth::attempt($credentials, $remember)) {
-            return back()
-                ->withErrors([
-                    'email' => 'Ces identifiants ne correspondent à aucun compte.',
-                ])
-                ->onlyInput('email');
-        }
-
+        // Nouvel identifiant de session après connexion (anti-fixation de session)
         $request->session()->regenerate();
 
         return redirect()->intended(route('dashboard'));
