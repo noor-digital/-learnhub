@@ -518,11 +518,11 @@ body { background: var(--bg) !important; }
             <div class="kpi-icon"><i class="bi bi-cash-stack"></i></div>
             <span class="kpi-trend neu">estimé</span>
         </div>
-        <div class="kpi-label">Revenus estimés</div>
+        <div class="kpi-label">Paiements simulés estimés</div>
         <div class="kpi-value">
             {{ number_format($revenueEst, 0, ',', ' ') }} €
         </div>
-        <div class="kpi-sub">prix × inscrits</div>
+        <div class="kpi-sub">prix actuel × inscriptions payées · simulation</div>
     </div>
 
     {{-- Note --}}
@@ -604,7 +604,7 @@ body { background: var(--bg) !important; }
                             <th style="padding-left:1.3rem">Cours</th>
                             <th>Statut</th>
                             <th class="text-center">Inscrits</th>
-                            <th class="text-center">Revenu</th>
+                            <th class="text-center">Estimation</th>
                             <th class="text-center">Note</th>
                             <th class="text-center"
                                 style="padding-right:1.1rem"></th>
@@ -661,7 +661,7 @@ body { background: var(--bg) !important; }
                                 @if($course->price > 0)
                                     <span style="font-weight:700;font-size:.87rem;
                                                  color:var(--brand)">
-                                        {{ number_format($course->price * $course->students_count,
+                                        {{ number_format($course->price * $course->paid_students_count,
                                             0, ',', ' ') }} €
                                     </span>
                                 @else
@@ -889,7 +889,7 @@ document.addEventListener('DOMContentLoaded', () => {
             data: {
                 labels: {!! $chartLabels->toJson() !!},
                 datasets: [{
-                    label: 'Revenus (€)',
+                    label: 'Paiements simulés estimés (€)',
                     data: {!! $chartRevenues->toJson() !!},
                     backgroundColor: 'rgba(15,110,86,.1)',
                     borderColor: BRAND2,
