@@ -210,9 +210,17 @@ class CourseAccessAndQuizSafetyTest extends TestCase
             ])
             ->assertRedirect(route('courses.show', $course));
 
+        $newActiveQuiz = Quiz::where('course_id', $course->id)
+            ->where('is_active', true)
+            ->firstOrFail();
+
+        $this->assertNotSame($quiz->id, $newActiveQuiz->id);
+        $this->assertSame('Quiz mis à jour', $newActiveQuiz->title);
+
         $this->assertDatabaseHas('quizzes', [
             'id' => $quiz->id,
-            'title' => 'Quiz mis à jour',
+            'title' => 'Ancien titre',
+            'is_active' => false,
         ]);
         $this->assertDatabaseHas('quiz_results', [
             'id' => $result->id,
