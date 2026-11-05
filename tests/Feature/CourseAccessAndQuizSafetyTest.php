@@ -65,6 +65,10 @@ class CourseAccessAndQuizSafetyTest extends TestCase
 
         $this->assertFalse($student->fresh()->isEnrolledIn($course));
         $this->assertFalse($course->fresh()->isAccessibleBy($student->fresh()));
+
+        // Même si le cours devient gratuit, un statut pending reste bloqué.
+        $course->update(['price' => 0]);
+        $this->assertFalse($course->fresh()->isAccessibleBy($student->fresh()));
     }
 
     public function test_free_and_paid_enrollments_remain_valid_when_course_price_changes(): void
@@ -78,6 +82,11 @@ class CourseAccessAndQuizSafetyTest extends TestCase
         $this->enroll($paidStudent, $course, 'paid');
 
         $this->assertTrue($course->fresh()->isAccessibleBy($freeStudent->fresh()));
+        $this->assertTrue($course->fresh()->isAccessibleBy($paidStudent->fresh()));
+
+        // Le cours devient gratuit après les inscriptions : le statut paid
+        // reste valable, sans dépendre du prix affiché aujourd'hui.
+        $course->update(['price' => 0]);
         $this->assertTrue($course->fresh()->isAccessibleBy($paidStudent->fresh()));
     }
 
@@ -184,6 +193,16 @@ class CourseAccessAndQuizSafetyTest extends TestCase
             'pass_score' => 70,
             'is_active' => true,
         ]);
+        $oldQuestion = Question::create([
+            'quiz_id' => $quiz->id,
+            'question_text' => 'Question de l’ancienne version ?',
+            'order' => 1,
+        ]);
+        $oldAnswer = Answer::create([
+            'question_id' => $oldQuestion->id,
+            'answer_text' => 'Ancienne réponse correcte',
+            'is_correct' => true,
+        ]);
         $result = QuizResult::create([
             'quiz_id' => $quiz->id,
             'user_id' => $student->id,
@@ -221,6 +240,16 @@ class CourseAccessAndQuizSafetyTest extends TestCase
             'id' => $quiz->id,
             'title' => 'Ancien titre',
             'is_active' => false,
+        ]);
+        $this->assertDatabaseHas('questions', [
+            'id' => $oldQuestion->id,
+            'quiz_id' => $quiz->id,
+            'question_text' => 'Question de l’ancienne version ?',
+        ]);
+        $this->assertDatabaseHas('answers', [
+            'id' => $oldAnswer->id,
+            'question_id' => $oldQuestion->id,
+            'answer_text' => 'Ancienne réponse correcte',
         ]);
         $this->assertDatabaseHas('quiz_results', [
             'id' => $result->id,
