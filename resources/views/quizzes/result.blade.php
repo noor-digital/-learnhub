@@ -61,7 +61,11 @@
         <p class="text-muted mb-3" style="font-size:.87rem">
             {{ $correct }} / {{ $total }} bonnes réponses
             &nbsp;·&nbsp; Requis : {{ $quiz->pass_score }}%
-            &nbsp;·&nbsp; Tentative n°{{ $result->attempts }}
+            @if($isPreview)
+                &nbsp;·&nbsp; Prévisualisation (non enregistrée)
+            @else
+                &nbsp;·&nbsp; Tentative n°{{ $result->attempts }}
+            @endif
         </p>
 
         <div class="d-flex justify-content-center gap-2 flex-wrap">
@@ -77,7 +81,7 @@
                     ->where('course_id', $course->id)
                     ->first()?->pivot->progress ?? 0;
             @endphp
-            @if($prog >= 100)
+            @if(!$isPreview && $prog >= 100)
                 <a href="{{ route('certificate.generate', $course) }}"
                    class="btn btn-sm fw-semibold px-4"
                    style="background:#198754;color:#fff;
