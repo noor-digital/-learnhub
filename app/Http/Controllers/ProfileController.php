@@ -50,15 +50,11 @@ class ProfileController extends Controller
             'password' => ['required', 'current_password'],
         ]);
 
-        $user = $request->user();
-
-        Auth::logout();
-
-        $user->delete();
-
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-
-        return Redirect::to('/');
-    }
-}
+        // Les comptes peuvent être liés à des cours, inscriptions, avis,
+        // résultats de quiz et certificats. La suppression autonome est
+        // désactivée pour préserver cet historique.
+        return Redirect::route('profile.edit')->with(
+            'status',
+            'account-deletion-protected'
+        );
+    }}
