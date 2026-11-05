@@ -132,6 +132,9 @@ class QuizController extends Controller
             ]);
         } else {
             $result = DB::transaction(function () use ($quiz, $user, $score, $passed) {
+                // Verrouille le quiz même lorsqu'aucun résultat n'existe encore.
+                DB::table('quizzes')->where('id', $quiz->id)->lockForUpdate()->first();
+
                 $existing = QuizResult::where('quiz_id', $quiz->id)
                     ->where('user_id', $user->id)
                     ->lockForUpdate()
@@ -219,6 +222,9 @@ class QuizController extends Controller
         // L'ancienne version est conservée inactive avec ses questions et
         // ses résultats : aucune tentative historique n'est supprimée.
         $quiz = DB::transaction(function () use ($course, $validated) {
+            // Verrouille le cours pour empêcher deux versions actives simultanées.
+            Course::whereKey($course->id)->lockForUpdate()->first();
+
             $activeQuizzes = $course->quizzes()
                 ->where('is_active', true)
                 ->lockForUpdate()
