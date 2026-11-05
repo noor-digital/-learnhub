@@ -19,17 +19,18 @@ class CertificateController extends Controller
             'Une inscription active est requise pour obtenir le certificat.'
         );
 
-        // Vérification 2 : progression 100%
-        $enrollment = $user->enrolledCourses()
-            ->where('course_id', $course->id)
-            ->first();
-
-        $progress = $enrollment?->pivot->progress ?? 0;
+        // Vérifie la progression réelle, sans se fier uniquement au pourcentage
+        // stocké (qui peut être ancien ou arrondi à 100 % trop tôt).
+        $totalLessons = $course->lessons()->count();
+        $completedLessons = $user->completedLessons()
+            ->where('lessons.course_id', $course->id)
+            ->distinct()
+            ->count('lessons.id');
 
         abort_unless(
-            $progress >= 100,
+            $totalLessons > 0 && $completedLessons === $totalLessons,
             403,
-            'Terminez le cours à 100% pour obtenir le certificat.'
+            'Terminez toutes les leçons du cours pour obtenir le certificat.'
         );
 
         $course->load(['formateur', 'category']);
