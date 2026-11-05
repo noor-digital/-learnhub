@@ -19,7 +19,8 @@ class CourseController extends Controller
         $query = Course::with(['formateur', 'category'])
             ->withCount(['students', 'reviews'])
             ->withAvg('reviews', 'rating')
-            ->where('is_published', true);
+            ->where('is_published', true)
+            ->whereNull('archived_at');
 
         // Filtre par catégorie si sélectionnée
         if ($request->filled('category')) {
@@ -93,7 +94,11 @@ class CourseController extends Controller
     public function show(Course $course)
     {
         // Un cours non publié est visible uniquement par son auteur ou un admin
-        if (! $course->is_published) {
+        if ($course->archived_at) {
+            abort_unless((int) auth()->id() === (int) $course->user_id || auth()->user()->isAdmin(), 404);
+        }
+
+        if (! $course->is_published || $course->archived_at) {
             if ((int) auth()->id() !== (int) $course->user_id && ! auth()->user()->isAdmin()) {
                 abort(403, 'Ce cours n\'est pas encore publié.');
             }
@@ -158,16 +163,19 @@ class CourseController extends Controller
     {
         $this->authorize('delete', $course);
 
-        // Supprimer l'image associée
-        if ($course->thumbnail) {
-            \Storage::disk('public')->delete($course->thumbnail);
+        if ($course->archived_at) {
+            return redirect()->route('courses.index')->with('status', 'Ce cours est déjà archivé.');
         }
 
-        $course->delete();
+        // L'archivage masque le cours du catalogue sans toucher à son historique.
+        $course->update([
+            'is_published' => false,
+            'archived_at' => now(),
+        ]);
 
         return redirect()
             ->route('courses.index')
-            ->with('success', 'Le cours "' . $course->title . '" a été supprimé.');
+            ->with('success', 'Le cours "' . $course->title . '" a été archivé. Son historique est conservé.');
     }
 
     // ─────────────────────────────────────────────────────
