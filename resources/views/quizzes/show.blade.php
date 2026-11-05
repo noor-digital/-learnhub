@@ -166,6 +166,13 @@
     <div class="quiz-main">
         <div class="quiz-box">
 
+            @if($isPreview)
+            <div class="alert alert-info mb-3" role="status" style="border-radius:10px">
+                <strong>Mode prévisualisation.</strong>
+                Vos réponses servent uniquement à vérifier le quiz. Aucun résultat étudiant ne sera enregistré.
+            </div>
+            @endif
+
             {{-- Stats --}}
             <div class="quiz-stats">
                 <div class="qstat">
