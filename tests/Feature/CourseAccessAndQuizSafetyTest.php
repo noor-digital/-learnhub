@@ -427,4 +427,77 @@ class CourseAccessAndQuizSafetyTest extends TestCase
             'progress' => 50,
         ]);
     }
+
+    public function test_archiving_course_preserves_enrollments_and_hides_it_from_catalogue(): void
+    {
+        $owner = $this->makeUser('formateur');
+        $student = $this->makeUser();
+        $course = $this->makeCourse($owner);
+        $enrollment = $this->enroll($student, $course, 'free', 40);
+
+        $this->actingAs($owner)
+            ->delete(route('courses.destroy', $course))
+            ->assertRedirect(route('courses.index'));
+
+        $archived = $course->fresh();
+
+        $this->assertNotNull($archived->archived_at);
+        $this->assertFalse($archived->is_published);
+        $this->assertDatabaseHas('enrollments', [
+            'id' => $enrollment->id,
+            'course_id' => $course->id,
+            'user_id' => $student->id,
+            'progress' => 40,
+        ]);
+
+        $this->get(route('courses.index'))
+            ->assertDontSee('Cours de test');
+    }
+
+    public function test_archived_course_can_only_be_restored_by_owner_as_draft(): void
+    {
+        $owner = $this->makeUser('formateur');
+        $otherFormateur = $this->makeUser('formateur');
+        $course = $this->makeCourse($owner);
+        $course->update([
+            'is_published' => false,
+            'archived_at' => now(),
+        ]);
+
+        $this->actingAs($otherFormateur)
+            ->post(route('courses.restore', $course))
+            ->assertForbidden();
+
+        $this->actingAs($owner)
+            ->post(route('courses.restore', $course))
+            ->assertRedirect(route('courses.edit', $course));
+
+        $restored = $course->fresh();
+        $this->assertNull($restored->archived_at);
+        $this->assertFalse($restored->is_published);
+    }
+
+    public function test_account_deletion_request_does_not_delete_user_or_related_history(): void
+    {
+        $owner = $this->makeUser('formateur');
+        $student = $this->makeUser();
+        $course = $this->makeCourse($owner);
+        $enrollment = $this->enroll($student, $course, 'free', 65);
+
+        $this->actingAs($student)
+            ->delete(route('profile.destroy'), [
+                'password' => 'Password123!',
+            ])
+            ->assertRedirect(route('profile.edit'));
+
+        $this->assertAuthenticatedAs($student);
+        $this->assertDatabaseHas('users', ['id' => $student->id]);
+        $this->assertDatabaseHas('enrollments', [
+            'id' => $enrollment->id,
+            'user_id' => $student->id,
+            'course_id' => $course->id,
+            'progress' => 65,
+        ]);
+    }
+
 }
