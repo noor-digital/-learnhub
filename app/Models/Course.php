@@ -78,7 +78,7 @@ class Course extends Model
             return true;
         }
 
-        // Un étudiant ne peut jamais accéder à un cours non publié.
+        // Un étudiant ne peut pas accéder à un brouillon ; un cours archivé reste accessible aux inscrits actifs.
         if (! $this->is_published && ! $this->archived_at) {
             return false;
         }
