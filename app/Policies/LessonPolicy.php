@@ -20,9 +20,10 @@ class LessonPolicy
     {
         $lesson->loadMissing('course');
 
-        // Peut voir si inscrit au cours OU propriétaire du cours
-        return $user->isEnrolledIn($lesson->course)
-            || $lesson->course->user_id === $user->id;
+        // Les admins sont traités par before(). Le propriétaire peut
+        // prévisualiser, tandis qu'un étudiant doit avoir un accès actif.
+        return (int) $lesson->course->user_id === (int) $user->id
+            || $lesson->course->isAccessibleBy($user);
     }
 
     public function update(User $user, Lesson $lesson): bool
