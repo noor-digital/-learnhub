@@ -27,10 +27,14 @@ class AdminDashboardController extends Controller
         $totalQuizzes    = QuizResult::count();
         $totalReviews    = Review::count();
 
-        // Revenus globaux (price × inscrits par cours)
-        $revenueGlobal = Course::withCount('students')
+        // Estimation indicative des paiements simulés : seuls les statuts
+        // paid sont comptés. Ce montant n'est pas un revenu réellement encaissé.
+        $revenueGlobal = Course::withCount([
+                'students as paid_students_count' => fn ($query) =>
+                    $query->where('enrollments.payment_status', 'paid'),
+            ])
             ->get()
-            ->sum(fn($c) => $c->price * $c->students_count);
+            ->sum(fn ($course) => (float) $course->price * $course->paid_students_count);
 
         // ── Derniers utilisateurs ──────────────────────
         $latestUsers = User::latest()
