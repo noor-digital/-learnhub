@@ -51,6 +51,10 @@ class LessonController extends Controller
 
     Lesson::create($validated);
 
+    // L'ajout d'une leçon modifie le dénominateur de progression
+    // pour tous les étudiants déjà inscrits.
+    $this->recalculateProgressForAllStudents($course);
+
     return redirect()
         ->route('courses.show', $course)
         ->with('success', 'Leçon "' . $validated['title'] . '" ajoutée !');
@@ -145,6 +149,9 @@ class LessonController extends Controller
         $title = $lesson->title;
         $lesson->delete();
 
+        // La suppression modifie la progression réelle de tous les étudiants.
+        $this->recalculateProgressForAllStudents($course);
+
         return redirect()
             ->route('courses.show', $course)
             ->with('success', 'Leçon "' . $title . '" supprimée.');
@@ -183,6 +190,15 @@ class LessonController extends Controller
         $this->recalculateProgress($user, $course);
 
         return back()->with('success', $message);
+    }
+
+    // Recalcule la progression de chaque étudiant actif après un changement
+    // du nombre de leçons du cours.
+    private function recalculateProgressForAllStudents(Course $course): void
+    {
+        $course->students()->get()->each(function ($student) use ($course) {
+            $this->recalculateProgress($student, $course);
+        });
     }
 
     // ─────────────────────────────────────────────
