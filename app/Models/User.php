@@ -56,6 +56,7 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(Course::class, 'enrollments')
                     ->withPivot('progress', 'enrolled_at', 'payment_status')
+                    ->wherePivotIn('payment_status', ['free', 'paid'])
                     ->withTimestamps();
     }
 
