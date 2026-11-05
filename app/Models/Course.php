@@ -18,6 +18,7 @@ class Course extends Model
 
     protected $casts = [
         'is_published' => 'boolean',
+        'archived_at' => 'datetime',
         'price'        => 'decimal:2',
     ];
 
