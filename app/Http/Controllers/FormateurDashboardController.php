@@ -35,8 +35,10 @@ class FormateurDashboardController extends Controller
         $drafts        = $courses->where('is_published', false)->count();
         $totalStudents = $courses->sum('students_count');
         $totalLessons  = $courses->sum('lessons_count');
+        // Estimation basée uniquement sur les inscriptions paid.
+        // Le paiement étant simulé, ce montant n'est pas un revenu encaissé.
         $revenueEst    = $courses->sum(
-            fn($c) => $c->price * $c->students_count
+            fn ($course) => (float) $course->price * $course->paid_students_count
         );
         $avgRating     = round(
             $courses->whereNotNull('reviews_avg_rating')
