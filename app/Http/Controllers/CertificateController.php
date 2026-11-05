@@ -11,8 +11,13 @@ class CertificateController extends Controller
     {
         $user = auth()->user();
 
-        // Vérification 1 : inscrit au cours
-        abort_unless($user->isEnrolledIn($course), 403, 'Inscription requise.');
+        // Un certificat est réservé à un étudiant disposant d'une
+        // inscription gratuite ou payée sur un cours publié.
+        abort_unless(
+            $user->isEtudiant() && $course->isAccessibleBy($user),
+            403,
+            'Une inscription active est requise pour obtenir le certificat.'
+        );
 
         // Vérification 2 : progression 100%
         $enrollment = $user->enrolledCourses()
