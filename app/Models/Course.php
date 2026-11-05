@@ -69,20 +69,23 @@ class Course extends Model
 
     public function isAccessibleBy(User $user): bool
     {
-        if ($user->isAdmin() || $this->user_id === $user->id) {
+        // Les administrateurs et le formateur propriétaire peuvent prévisualiser
+        // un cours, même lorsqu'il n'est pas encore publié.
+        if ($user->isAdmin() || (int) $this->user_id === (int) $user->id) {
             return true;
         }
 
-        $enrollment = $this->students()
-            ->where('enrollments.user_id', $user->id)
-            ->first();
-
-        if (! $enrollment) {
+        // Un étudiant ne peut jamais accéder à un cours non publié.
+        if (! $this->is_published) {
             return false;
         }
 
-        return $this->price == 0
-            || $enrollment->pivot->payment_status === 'paid';
+        // L'accès dépend du statut enregistré lors de l'inscription,
+        // et non du prix actuel du cours (qui peut changer).
+        return $this->students()
+            ->where('enrollments.user_id', $user->id)
+            ->whereIn('enrollments.payment_status', ['free', 'paid'])
+            ->exists();
     }
 
     // Récupère la progression de l'utilisateur pour ce cours
