@@ -1,6 +1,19 @@
 @extends('layouts.app')
 @section('title', $course->title)
 @section('content')
+@if($course->archived_at && (auth()->id() === $course->user_id || auth()->user()->isAdmin()))
+    <div class="container mx-auto my-4 px-4">
+        <div class="rounded-lg border border-amber-300 bg-amber-50 p-4 text-amber-900">
+            <strong>Cours archivé.</strong> Son historique est conservé et il n'est plus visible dans le catalogue.
+            <form method="POST" action="{{ route('courses.restore', $course) }}" class="mt-3">
+                @csrf
+                <button type="submit" class="rounded bg-amber-700 px-4 py-2 text-white">
+                    Restaurer comme brouillon
+                </button>
+            </form>
+        </div>
+    </div>
+@endif
 <style>
 /* ── Hero ──────────────────────────────────────────── */
 .course-hero {
