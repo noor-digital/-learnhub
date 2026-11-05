@@ -159,9 +159,9 @@ class LessonController extends Controller
         $course = $lesson->course;
 
         abort_unless(
-            $course->isAccessibleBy($user),
+            $user->isEtudiant() && $course->isAccessibleBy($user),
             403,
-            'Inscription active requise : un paiement ou une inscription gratuite valide est nécessaire.'
+            'Seuls les étudiants ayant une inscription active peuvent modifier leur progression.'
         );
 
         if ($lesson->isCompletedBy($user)) {
@@ -201,7 +201,7 @@ class LessonController extends Controller
                               ->count('lessons.id');
 
             // min(100, …) : sécurité pour ne jamais dépasser 100 %.
-            $progress = min(100, (int) round(($completed / $total) * 100));
+            $progress = min(100, intdiv($completed * 100, $total));
         } else {
             // Cours sans leçon : on force la progression à 0 %
             // au lieu de conserver une ancienne valeur.
