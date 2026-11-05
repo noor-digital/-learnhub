@@ -51,6 +51,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/courses/{course}/edit',   [CourseController::class, 'edit'])->name('courses.edit');
     Route::match(['put', 'patch'], '/courses/{course}', [CourseController::class, 'update'])->name('courses.update');
     Route::delete('/courses/{course}',     [CourseController::class, 'destroy'])->name('courses.destroy');
+    Route::post('/courses/{course}/restore', [CourseController::class, 'restore'])->name('courses.restore');
 
     // ── Leçons (/create DOIT être avant /{lesson}) ──────────────────────
     Route::get('/courses/{course}/lessons/create',        [LessonController::class, 'create'])->name('lessons.create');
