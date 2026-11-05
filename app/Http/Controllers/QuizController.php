@@ -76,7 +76,11 @@ class QuizController extends Controller
          * Exemple : answers[12] = 45
          * signifie : pour la question id=12, l'étudiant a choisi la réponse id=45
          */
-        $submitted = $request->input('answers', []);
+        $validatedAnswers = $request->validate([
+            'answers'   => ['nullable', 'array'],
+            'answers.*' => ['nullable', 'integer'],
+        ]);
+        $submitted = $validatedAnswers['answers'] ?? [];
 
         $total   = $quiz->questions->count();
         $correct = 0;
