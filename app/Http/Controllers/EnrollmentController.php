@@ -18,9 +18,18 @@ class EnrollmentController extends Controller
 
         abort_unless($user->isEtudiant(), 403, 'Seuls les étudiants peuvent s\'inscrire.');
 
+        abort_unless($course->is_published, 404);
+
         if ($user->isEnrolledIn($course)) {
             return back()->with('info', 'Vous êtes déjà inscrit à ce cours.');
         }
+
+        // Une inscription en attente ne donne aucun accès, mais peut être
+        // régularisée sans perdre la progression déjà enregistrée.
+        $pendingEnrollment = Enrollment::where('user_id', $user->id)
+            ->where('course_id', $course->id)
+            ->where('payment_status', 'pending')
+            ->first();
 
         // Si le cours est payant, rediriger vers la page de paiement
         // (aucune inscription n'est créée avant le traitement du paiement)
