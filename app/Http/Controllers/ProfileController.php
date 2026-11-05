@@ -57,4 +57,5 @@ class ProfileController extends Controller
             'status',
             'account-deletion-protected'
         );
-    }}
+    }
+}
