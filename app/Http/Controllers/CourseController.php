@@ -94,7 +94,7 @@ class CourseController extends Controller
     {
         // Un cours non publié est visible uniquement par son auteur ou un admin
         if (! $course->is_published) {
-            if (auth()->id() !== $course->user_id && ! auth()->user()->isAdmin()) {
+            if ((int) auth()->id() !== (int) $course->user_id && ! auth()->user()->isAdmin()) {
                 abort(403, 'Ce cours n\'est pas encore publié.');
             }
         }
