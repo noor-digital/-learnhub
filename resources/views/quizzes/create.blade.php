@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Créer un quiz')
+@section('title', $hasActiveQuiz ? 'Nouvelle version du quiz' : 'Créer un quiz')
 @section('content')
 <style>
 .qb { max-width: 760px; margin: 0 auto; padding: 2rem 1rem; }
@@ -36,8 +36,13 @@
            style="color:var(--brand);text-decoration:none;font-size:.82rem">
             <i class="bi bi-arrow-left me-1"></i>Retour
         </a>
-        <h1 class="h4 fw-bold mt-2 mb-0">Créer un quiz</h1>
+        <h1 class="h4 fw-bold mt-2 mb-0">{{ $hasActiveQuiz ? 'Créer une nouvelle version du quiz' : 'Créer un quiz' }}</h1>
         <p class="text-muted small">{{ $course->title }}</p>
+        @if($hasActiveQuiz)
+            <div class="alert alert-info mt-3 mb-0" role="status" style="border-radius:10px">
+                Vous créez une nouvelle version. L’ancienne version, ses questions et les résultats déjà obtenus seront conservés.
+            </div>
+        @endif
     </div>
 
     @if($errors->any())
@@ -90,7 +95,7 @@
         <div class="d-flex gap-2">
             <button type="submit" class="btn fw-semibold px-4"
                     style="background:var(--brand);color:#fff;border-radius:8px;border:none">
-                <i class="bi bi-check-lg me-1"></i>Créer le quiz
+                <i class="bi bi-check-lg me-1"></i>{{ $hasActiveQuiz ? 'Enregistrer la nouvelle version' : 'Créer le quiz' }}
             </button>
             <a href="{{ route('courses.show', $course) }}"
                class="btn btn-outline-secondary" style="border-radius:8px">
