@@ -573,7 +573,7 @@ body { background: var(--bg) !important; }
     <div class="panel">
         <div class="panel-hd">
             <h2 class="panel-title">
-                <i class="bi bi-graph-up-arrow"></i>Revenus par cours
+                <i class="bi bi-graph-up-arrow"></i>Paiements simulés estimés par cours
             </h2>
             <span class="panel-badge">€</span>
         </div>
