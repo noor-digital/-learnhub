@@ -174,7 +174,7 @@ class QuizController extends Controller
     public function create(Course $course): View
     {
         abort_unless(
-            auth()->user()->isAdmin() || $course->user_id === auth()->id(),
+            auth()->user()->isAdmin() || (int) $course->user_id === (int) auth()->id(),
             403
         );
 
