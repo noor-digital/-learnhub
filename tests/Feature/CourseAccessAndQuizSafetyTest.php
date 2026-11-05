@@ -452,6 +452,13 @@ class CourseAccessAndQuizSafetyTest extends TestCase
 
         $this->get(route('courses.index'))
             ->assertDontSee('Cours de test');
+
+        // Les étudiants déjà inscrits conservent leur accès pédagogique.
+        $this->assertTrue($archived->isAccessibleBy($student->fresh()));
+
+        $this->actingAs($student)
+            ->get(route('courses.show', $course))
+            ->assertOk();
     }
 
     public function test_archived_course_can_only_be_restored_by_owner_as_draft(): void
