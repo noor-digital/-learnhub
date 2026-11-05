@@ -21,7 +21,7 @@ class AdminDashboardController extends Controller
         $totalFormateurs = User::where('role', 'formateur')->count();
         $totalEtudiants  = User::where('role', 'etudiant')->count();
         $totalCourses    = Course::count();
-        $publishedCourses= Course::where('is_published', true)->count();
+        $publishedCourses= Course::whereNull('archived_at')->where('is_published', true)->count();
         $totalLessons    = DB::table('lessons')->count();
         $totalEnrollments= Enrollment::count();
         $totalQuizzes    = QuizResult::count();
@@ -29,7 +29,7 @@ class AdminDashboardController extends Controller
 
         // Estimation indicative des paiements simulés : seuls les statuts
         // paid sont comptés. Ce montant n'est pas un revenu réellement encaissé.
-        $revenueGlobal = Course::withCount([
+        $revenueGlobal = Course::whereNull('archived_at')->withCount([
                 'students as paid_students_count' => fn ($query) =>
                     $query->where('enrollments.payment_status', 'paid'),
             ])
@@ -42,14 +42,14 @@ class AdminDashboardController extends Controller
             ->get(['id', 'name', 'email', 'role', 'created_at']);
 
         // ── Derniers cours ─────────────────────────────
-        $latestCourses = Course::with(['formateur:id,name', 'category:id,name'])
+        $latestCourses = Course::whereNull('archived_at')->with(['formateur:id,name', 'category:id,name'])
             ->withCount('students')
             ->latest()
             ->take(6)
             ->get();
 
         // ── Top cours par inscrits ─────────────────────
-        $topCourses = Course::withCount('students')
+        $topCourses = Course::whereNull('archived_at')->withCount('students')
             ->withAvg('reviews', 'rating')
             ->with('formateur:id,name')
             ->orderByDesc('students_count')
@@ -113,7 +113,8 @@ class AdminDashboardController extends Controller
             ]));
 
         // Derniers cours publiés
-        Course::where('is_published', true)
+        Course::whereNull('archived_at')
+            ->where('is_published', true)
             ->with('formateur:id,name')
             ->latest()
             ->take(3)
