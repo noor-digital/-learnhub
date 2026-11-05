@@ -6,6 +6,8 @@ use App\Models\Course;
 use App\Models\QuizResult;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class QuizController extends Controller
@@ -17,12 +19,12 @@ class QuizController extends Controller
     {
         $user = auth()->user();
 
+        $isPreview = $user->isAdmin() || (int) $course->user_id === (int) $user->id;
+
         abort_unless(
-            $user->isAdmin()
-                || $course->user_id === $user->id
-                || $user->isEnrolledIn($course),
+            $isPreview || ($course->is_published && $course->isAccessibleBy($user)),
             403,
-            'Inscris-toi au cours pour accéder au quiz.'
+            'Un étudiant doit être inscrit et disposer d’un accès actif à un cours publié pour passer ce quiz.'
         );
 
         $quiz = $course->quizzes()
@@ -41,9 +43,9 @@ class QuizController extends Controller
             $question->setRelation('answers', $question->answers->shuffle());
         });
 
-        $existingResult = $quiz->resultForUser($user);
+        $existingResult = $isPreview ? null : $quiz->resultForUser($user);
 
-        return view('quizzes.show', compact('course', 'quiz', 'existingResult'));
+        return view('quizzes.show', compact('course', 'quiz', 'existingResult', 'isPreview'));
     }
 
     // ─────────────────────────────────────────────────
@@ -53,11 +55,12 @@ class QuizController extends Controller
     {
         $user = auth()->user();
 
+        $isPreview = $user->isAdmin() || (int) $course->user_id === (int) $user->id;
+
         abort_unless(
-            $user->isAdmin()
-                || $course->user_id === $user->id
-                || $user->isEnrolledIn($course),
-            403
+            $isPreview || ($course->is_published && $course->isAccessibleBy($user)),
+            403,
+            'Un étudiant doit être inscrit et disposer d’un accès actif à un cours publié pour passer ce quiz.'
         );
 
         // ✅ Charge le quiz avec toutes les questions ET réponses
@@ -114,33 +117,47 @@ class QuizController extends Controller
         $score  = $total > 0 ? (int) round(($correct / $total) * 100) : 0;
         $passed = $score >= $quiz->pass_score;
 
-        // ✅ Sauvegarde dans quiz_results (update si déjà tenté)
-        $existing = QuizResult::where('quiz_id', $quiz->id)
-                               ->where('user_id', $user->id)
-                               ->first();
-
-        if ($existing) {
-            $existing->update([
-                'score'        => $score,
-                'passed'       => $passed,
-                'attempts'     => $existing->attempts + 1,
+        // Une prévisualisation admin/formateur calcule le score à l'écran
+        // mais ne crée et ne modifie jamais de statistique étudiante.
+        if ($isPreview) {
+            $result = new QuizResult([
+                'score' => $score,
+                'passed' => $passed,
+                'attempts' => 0,
                 'completed_at' => now(),
             ]);
-            $result = $existing->fresh();
         } else {
-            $result = QuizResult::create([
-                'quiz_id'      => $quiz->id,
-                'user_id'      => $user->id,
-                'score'        => $score,
-                'passed'       => $passed,
-                'attempts'     => 1,
-                'completed_at' => now(),
-            ]);
+            $result = DB::transaction(function () use ($quiz, $user, $score, $passed) {
+                $existing = QuizResult::where('quiz_id', $quiz->id)
+                    ->where('user_id', $user->id)
+                    ->lockForUpdate()
+                    ->first();
+
+                if ($existing) {
+                    $existing->update([
+                        'score'        => $score,
+                        'passed'       => $passed,
+                        'attempts'     => $existing->attempts + 1,
+                        'completed_at' => now(),
+                    ]);
+
+                    return $existing->fresh();
+                }
+
+                return QuizResult::create([
+                    'quiz_id'      => $quiz->id,
+                    'user_id'      => $user->id,
+                    'score'        => $score,
+                    'passed'       => $passed,
+                    'attempts'     => 1,
+                    'completed_at' => now(),
+                ]);
+            });
         }
 
         return view('quizzes.result', compact(
             'course', 'quiz', 'result',
-            'details', 'score', 'passed', 'correct', 'total'
+            'details', 'score', 'passed', 'correct', 'total', 'isPreview'
         ));
     }
 
@@ -167,46 +184,77 @@ class QuizController extends Controller
             403
         );
 
-        $request->validate([
-            'title'      => ['required', 'string', 'max:255'],
-            'pass_score' => ['required', 'integer', 'min:1', 'max:100'],
-            'questions'  => ['required', 'array', 'min:1'],
+        $validated = $request->validate([
+            'title'                         => ['required', 'string', 'max:255'],
+            'description'                   => ['nullable', 'string', 'max:5000'],
+            'pass_score'                    => ['required', 'integer', 'min:1', 'max:100'],
+            'questions'                     => ['required', 'array', 'min:1'],
+            'questions.*.text'               => ['required', 'string', 'max:2000'],
+            'questions.*.answers'            => ['required', 'array', 'min:2'],
+            'questions.*.answers.*.text'     => ['required', 'string', 'max:255'],
+            'questions.*.answers.*.correct'  => ['required', 'in:0,1'],
         ]);
 
-        // Supprime l'ancien quiz (cascade supprime questions + réponses + résultats)
-        $course->quizzes()->delete();
+        // Chaque question doit avoir exactement une bonne réponse.
+        foreach ($validated['questions'] as $questionIndex => $questionData) {
+            $correctAnswers = collect($questionData['answers'])
+                ->filter(fn ($answer) => $answer['correct'] === '1')
+                ->count();
 
-        $quiz = $course->quizzes()->create([
-            'title'       => trim($request->title),
-            'description' => trim($request->description ?? ''),
-            'pass_score'  => (int) $request->pass_score,
-            'is_active'   => true,
-        ]);
-
-        foreach ($request->questions as $qIdx => $qData) {
-
-            $questionText = trim($qData['text'] ?? '');
-            if (empty($questionText)) continue;
-
-            $question = $quiz->questions()->create([
-                'question_text' => $questionText,
-                'order'         => (int) $qIdx + 1,
-            ]);
-
-            foreach ($qData['answers'] ?? [] as $aIdx => $aData) {
-
-                $answerText = trim($aData['text'] ?? '');
-                if (empty($answerText)) continue;
-
-                $question->answers()->create([
-                    'answer_text' => $answerText,
-                    'is_correct'  => ($aData['correct'] ?? '0') === '1',
+            if ($correctAnswers !== 1) {
+                throw ValidationException::withMessages([
+                    "questions.{$questionIndex}.answers" =>
+                        'Chaque question doit avoir exactement une bonne réponse.',
                 ]);
             }
         }
 
+        // Met à jour le quiz actif en conservant son identifiant :
+        // les résultats historiques restent donc liés au même quiz.
+        $quiz = DB::transaction(function () use ($course, $validated) {
+            $quiz = $course->quizzes()
+                ->where('is_active', true)
+                ->lockForUpdate()
+                ->first();
+
+            if ($quiz) {
+                $quiz->update([
+                    'title'       => trim($validated['title']),
+                    'description' => trim($validated['description'] ?? ''),
+                    'pass_score'  => (int) $validated['pass_score'],
+                ]);
+
+                // Seules les questions/réponses sont remplacées.
+                // Les lignes quiz_results ne sont jamais supprimées.
+                $quiz->questions()->delete();
+            } else {
+                $quiz = $course->quizzes()->create([
+                    'title'       => trim($validated['title']),
+                    'description' => trim($validated['description'] ?? ''),
+                    'pass_score'  => (int) $validated['pass_score'],
+                    'is_active'   => true,
+                ]);
+            }
+
+            foreach ($validated['questions'] as $qIdx => $qData) {
+                $question = $quiz->questions()->create([
+                    'question_text' => trim($qData['text']),
+                    'order'         => (int) $qIdx + 1,
+                ]);
+
+                foreach ($qData['answers'] as $aData) {
+                    $question->answers()->create([
+                        'answer_text' => trim($aData['text']),
+                        'is_correct'  => $aData['correct'] === '1',
+                    ]);
+                }
+            }
+
+            return $quiz;
+        });
+
         return redirect()
             ->route('courses.show', $course)
-            ->with('success', '✅ Quiz "' . $quiz->title . '" créé avec succès !');
+            ->with('success', '✅ Quiz "' . $quiz->title . '" enregistré sans supprimer les résultats existants.');
     }
 }
