@@ -14,7 +14,10 @@ class StudentDashboardController extends Controller
 
         // Cours inscrits avec progression et relations
         $enrolledCourses = $user->enrolledCourses()
-            ->where('courses.is_published', true)
+            ->where(function ($query) {
+                $query->where('courses.is_published', true)
+                    ->orWhereNotNull('courses.archived_at');
+            })
             ->with(['category', 'formateur', 'lessons'])
             ->withCount('lessons')
             ->get()
