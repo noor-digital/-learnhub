@@ -1,7 +1,7 @@
 @extends('layouts.app')
 @section('title', $course->title)
 @section('content')
-@if($course->archived_at && (auth()->id() === $course->user_id || auth()->user()->isAdmin()))
+@if($course->archived_at && ((int) auth()->id() === (int) $course->user_id || auth()->user()->isAdmin()))
     <div class="container mx-auto my-4 px-4">
         <div class="rounded-lg border border-amber-300 bg-amber-50 p-4 text-amber-900">
             <strong>Cours archivé.</strong> Son historique est conservé et il n'est plus visible dans le catalogue.
