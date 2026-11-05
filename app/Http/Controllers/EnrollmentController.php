@@ -28,14 +28,19 @@ class EnrollmentController extends Controller
             return redirect()->route('payment.show', $course);
         }
 
-        // Cours gratuit → inscription directe
-        Enrollment::create([
-            'user_id'        => $user->id,
-            'course_id'      => $course->id,
-            'enrolled_at'    => now(),
-            'progress'       => 0,
-            'payment_status' => 'free',
-        ]);
+        // Cours gratuit → inscription directe (ou régularisation d'une
+        // inscription en attente sans effacer la progression existante).
+        if ($pendingEnrollment) {
+            $pendingEnrollment->update(['payment_status' => 'free']);
+        } else {
+            Enrollment::create([
+                'user_id'        => $user->id,
+                'course_id'      => $course->id,
+                'enrolled_at'    => now(),
+                'progress'       => 0,
+                'payment_status' => 'free',
+            ]);
+        }
 
         return redirect()
             ->route('courses.show', $course)
