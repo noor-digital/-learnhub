@@ -20,6 +20,10 @@ class FormateurDashboardController extends Controller
         $courses = Course::query()
             ->where('user_id', $user->id)
             ->withCount(['students', 'lessons', 'reviews'])
+            ->withCount([
+                'students as paid_students_count' => fn ($query) =>
+                    $query->where('enrollments.payment_status', 'paid'),
+            ])
             ->withAvg('reviews', 'rating')
             ->with('category')
             ->latest()
@@ -50,7 +54,7 @@ class FormateurDashboardController extends Controller
 
         $chartRevenues = $courses->sortByDesc('students_count')
             ->take(5)
-            ->map(fn($c) => round($c->price * $c->students_count))
+            ->map(fn($c) => round((float) $c->price * $c->paid_students_count))
             ->values();
 
         // Activité récente simulée (inscriptions récentes)
