@@ -18,7 +18,7 @@ class EnrollmentController extends Controller
 
         abort_unless($user->isEtudiant(), 403, 'Seuls les étudiants peuvent s\'inscrire.');
 
-        abort_unless($course->is_published, 404);
+        abort_unless($course->is_published && ! $course->archived_at, 404);
 
         if ($user->isEnrolledIn($course)) {
             return back()->with('info', 'Vous êtes déjà inscrit à ce cours.');
