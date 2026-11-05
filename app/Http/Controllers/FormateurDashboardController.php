@@ -19,7 +19,6 @@ class FormateurDashboardController extends Controller
 
         $courses = Course::query()
             ->where('user_id', $user->id)
-            ->whereNull('archived_at')
             ->withCount(['students', 'lessons', 'reviews'])
             ->withCount([
                 'students as paid_students_count' => fn ($query) =>
@@ -30,39 +29,43 @@ class FormateurDashboardController extends Controller
             ->latest()
             ->get();
 
+        // Les cours archivés restent visibles au propriétaire pour restauration,
+        // mais ne sont plus comptés dans les indicateurs d'activité.
+        $activeCourses = $courses->whereNull('archived_at');
+
         // KPIs — variables directes, pas de tableau imbriqué
-        $totalCourses  = $courses->count();
-        $published     = $courses->where('is_published', true)->count();
-        $drafts        = $courses->where('is_published', false)->count();
-        $totalStudents = $courses->sum('students_count');
-        $totalLessons  = $courses->sum('lessons_count');
+        $totalCourses  = $activeCourses->count();
+        $published     = $activeCourses->where('is_published', true)->count();
+        $drafts        = $activeCourses->where('is_published', false)->count();
+        $totalStudents = $activeCourses->sum('students_count');
+        $totalLessons  = $activeCourses->sum('lessons_count');
         // Estimation basée uniquement sur les inscriptions paid.
         // Le paiement étant simulé, ce montant n'est pas un revenu encaissé.
-        $revenueEst    = $courses->sum(
+        $revenueEst    = $activeCourses->sum(
             fn ($course) => (float) $course->price * $course->paid_students_count
         );
         $avgRating     = round(
-            $courses->whereNotNull('reviews_avg_rating')
+            $activeCourses->whereNotNull('reviews_avg_rating')
                     ->avg('reviews_avg_rating') ?? 0,
             1
         );
 
         // Top 5 par inscrits → graphique
-        $chartLabels   = $courses->sortByDesc('students_count')
+        $chartLabels   = $activeCourses->sortByDesc('students_count')
             ->take(5)->pluck('title')
             ->map(fn($t) => \Str::limit($t, 20))->values();
 
-        $chartStudents = $courses->sortByDesc('students_count')
+        $chartStudents = $activeCourses->sortByDesc('students_count')
             ->take(5)->pluck('students_count')->values();
 
-        $chartRevenues = $courses->sortByDesc('students_count')
+        $chartRevenues = $activeCourses->sortByDesc('students_count')
             ->take(5)
             ->map(fn($c) => round((float) $c->price * $c->paid_students_count))
             ->values();
 
         // Activité récente simulée (inscriptions récentes)
         $recentActivity = collect();
-        foreach ($courses->take(5) as $course) {
+        foreach ($activeCourses->take(5) as $course) {
             if ($course->students_count > 0) {
                 $recentActivity->push([
                     'icon'  => 'people',
