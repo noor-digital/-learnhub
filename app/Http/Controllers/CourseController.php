@@ -95,13 +95,13 @@ class CourseController extends Controller
     {
         // Un cours non publié est visible uniquement par son auteur ou un admin
         if ($course->archived_at) {
-            abort_unless((int) auth()->id() === (int) $course->user_id || auth()->user()->isAdmin(), 404);
-        }
-
-        if (! $course->is_published || $course->archived_at) {
-            if ((int) auth()->id() !== (int) $course->user_id && ! auth()->user()->isAdmin()) {
-                abort(403, 'Ce cours n\'est pas encore publié.');
-            }
+            abort_unless($course->isAccessibleBy(auth()->user()), 404);
+        } elseif (! $course->is_published) {
+            abort_unless(
+                (int) auth()->id() === (int) $course->user_id || auth()->user()->isAdmin(),
+                403,
+                'Ce cours n\\'est pas encore publié.'
+            );
         }
 
         // Charge les relations pour éviter les N+1 queries
