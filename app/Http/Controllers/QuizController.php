@@ -175,7 +175,9 @@ class QuizController extends Controller
             403
         );
 
-        return view('quizzes.create', compact('course'));
+        $hasActiveQuiz = $course->quizzes()->where('is_active', true)->exists();
+
+        return view('quizzes.create', compact('course', 'hasActiveQuiz'));
     }
 
     // ─────────────────────────────────────────────────
@@ -213,32 +215,25 @@ class QuizController extends Controller
             }
         }
 
-        // Met à jour le quiz actif en conservant son identifiant :
-        // les résultats historiques restent donc liés au même quiz.
+        // Chaque modification crée une nouvelle version du quiz.
+        // L'ancienne version est conservée inactive avec ses questions et
+        // ses résultats : aucune tentative historique n'est supprimée.
         $quiz = DB::transaction(function () use ($course, $validated) {
-            $quiz = $course->quizzes()
+            $activeQuizzes = $course->quizzes()
                 ->where('is_active', true)
                 ->lockForUpdate()
-                ->first();
+                ->get();
 
-            if ($quiz) {
-                $quiz->update([
-                    'title'       => trim($validated['title']),
-                    'description' => trim($validated['description'] ?? ''),
-                    'pass_score'  => (int) $validated['pass_score'],
-                ]);
-
-                // Seules les questions/réponses sont remplacées.
-                // Les lignes quiz_results ne sont jamais supprimées.
-                $quiz->questions()->delete();
-            } else {
-                $quiz = $course->quizzes()->create([
-                    'title'       => trim($validated['title']),
-                    'description' => trim($validated['description'] ?? ''),
-                    'pass_score'  => (int) $validated['pass_score'],
-                    'is_active'   => true,
-                ]);
+            foreach ($activeQuizzes as $activeQuiz) {
+                $activeQuiz->update(['is_active' => false]);
             }
+
+            $quiz = $course->quizzes()->create([
+                'title'       => trim($validated['title']),
+                'description' => trim($validated['description'] ?? ''),
+                'pass_score'  => (int) $validated['pass_score'],
+                'is_active'   => true,
+            ]);
 
             foreach ($validated['questions'] as $qIdx => $qData) {
                 $question = $quiz->questions()->create([
@@ -259,6 +254,6 @@ class QuizController extends Controller
 
         return redirect()
             ->route('courses.show', $course)
-            ->with('success', '✅ Quiz "' . $quiz->title . '" enregistré sans supprimer les résultats existants.');
+            ->with('success', '✅ Nouvelle version du quiz « ' . $quiz->title . ' » enregistrée. Les anciennes tentatives sont conservées.');
     }
 }
