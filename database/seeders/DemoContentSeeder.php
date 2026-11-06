@@ -236,6 +236,7 @@ class DemoContentSeeder extends Seeder
             [0, 0, 'free', 25],
             [0, 1, 'free', 50],
             [0, 2, 'paid', 25],
+            [0, 6, 'paid', 25], // accès conservé à un cours archivé
             [1, 0, 'free', 50],
             [1, 3, 'paid', 25],
             [1, 5, 'paid', 0],
